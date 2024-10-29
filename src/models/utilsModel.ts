@@ -7,8 +7,8 @@ const poolConnection = mysql.createPool(dbCredentials);
 export const db = drizzle({ client: poolConnection, casing: 'snake_case' });
 
 // Example timestamp wrapper function
-export const addTimestamps = (data: any, isUpdate = false) => {
-    const timestamp = new Date().toISOString();
+export function addTimestamps(data: any, isUpdate = false) {
+    const timestamp = new Date();
 
     if (Array.isArray(data)) {
         data.forEach(it => {
@@ -16,7 +16,6 @@ export const addTimestamps = (data: any, isUpdate = false) => {
             if (!isUpdate && !it.createdAt) {
                 it.createdAt = timestamp;
             }
-            // Always set updatedAt on both insert and update
             it.updatedAt = timestamp;
         });
     } else {
@@ -25,7 +24,6 @@ export const addTimestamps = (data: any, isUpdate = false) => {
             data.createdAt = timestamp;
         }
 
-        // Always set updatedAt on both insert and update
         data.updatedAt = timestamp;
     }
 

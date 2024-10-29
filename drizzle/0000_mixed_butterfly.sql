@@ -8,7 +8,6 @@ CREATE TABLE `agenda_kegiatan` (
 	`status` enum('rencana','jalan','selesai'),
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `agenda_kegiatan_agenda_id` PRIMARY KEY(`agenda_id`)
 );
 --> statement-breakpoint
@@ -19,7 +18,6 @@ CREATE TABLE `group_messages` (
 	`text` longtext,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `group_messages_messages_id` PRIMARY KEY(`messages_id`)
 );
 --> statement-breakpoint
@@ -29,8 +27,7 @@ CREATE TABLE `jumlah_kegiatan` (
 	`month` tinyint NOT NULL,
 	`jumlah_kegiatan` int NOT NULL DEFAULT 0,
 	`updated_at` timestamp,
-	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp
+	`created_at` timestamp NOT NULL DEFAULT (now())
 );
 --> statement-breakpoint
 CREATE TABLE `kegiatan` (
@@ -41,7 +38,6 @@ CREATE TABLE `kegiatan` (
 	`deskripsi` text,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `kegiatan_kegiatan_id` PRIMARY KEY(`kegiatan_id`)
 );
 --> statement-breakpoint
@@ -50,7 +46,6 @@ CREATE TABLE `kompetensi` (
 	`nama_kompetensi` varchar(255) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `kompetensi_kompetensi_id` PRIMARY KEY(`kompetensi_id`)
 );
 --> statement-breakpoint
@@ -59,9 +54,7 @@ CREATE TABLE `kompetensi_to_kegiatan` (
 	`kegiatan_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
-	CONSTRAINT `kompetensi_to_kegiatan_kompetensi_id_kegiatan_id_pk` PRIMARY KEY(`kompetensi_id`,`kegiatan_id`),
-	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
+	CONSTRAINT `kompetensi_to_kegiatan_kompetensi_id_kegiatan_id_pk` PRIMARY KEY(`kompetensi_id`,`kegiatan_id`)
 );
 --> statement-breakpoint
 CREATE TABLE `lampiran_kegiatan` (
@@ -71,7 +64,6 @@ CREATE TABLE `lampiran_kegiatan` (
 	`url` longtext NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `lampiran_kegiatan_lampiran_id` PRIMARY KEY(`lampiran_id`)
 );
 --> statement-breakpoint
@@ -81,7 +73,6 @@ CREATE TABLE `messages_attachments` (
 	`url` longtext NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `messages_attachments_attachment_id` PRIMARY KEY(`attachment_id`)
 );
 --> statement-breakpoint
@@ -90,9 +81,7 @@ CREATE TABLE `messages_to_attachments` (
 	`attachment_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
-	CONSTRAINT `messages_to_attachments_messages_id_pk` PRIMARY KEY(`messages_id`),
-	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
+	CONSTRAINT `messages_to_attachments_messages_id_pk` PRIMARY KEY(`messages_id`)
 );
 --> statement-breakpoint
 CREATE TABLE `progress_agenda` (
@@ -101,7 +90,6 @@ CREATE TABLE `progress_agenda` (
 	`deskripsi_progress` longtext NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `progress_agenda_progress_id` PRIMARY KEY(`progress_id`)
 );
 --> statement-breakpoint
@@ -110,9 +98,7 @@ CREATE TABLE `progress_to_attachments` (
 	`attachment_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
-	CONSTRAINT `progress_to_attachments_progress_id_pk` PRIMARY KEY(`progress_id`),
-	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
+	CONSTRAINT `progress_to_attachments_progress_id_pk` PRIMARY KEY(`progress_id`)
 );
 --> statement-breakpoint
 CREATE TABLE `progress_attachment` (
@@ -121,7 +107,6 @@ CREATE TABLE `progress_attachment` (
 	`url` longtext NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `progress_attachment_attachment_id` PRIMARY KEY(`attachment_id`)
 );
 --> statement-breakpoint
@@ -135,7 +120,6 @@ CREATE TABLE `user` (
 	`password` text NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
 	CONSTRAINT `user_user_id` PRIMARY KEY(`user_id`),
 	CONSTRAINT `user_nip_unique` UNIQUE(`nip`),
 	CONSTRAINT `user_email_unique` UNIQUE(`email`)
@@ -148,9 +132,7 @@ CREATE TABLE `user_to_kegiatan` (
 	`role_kegiatan` enum('pic','anggota') DEFAULT 'anggota',
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
-	CONSTRAINT `user_to_kegiatan_user_id_kegiatan_id_pk` PRIMARY KEY(`user_id`,`kegiatan_id`),
-	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
+	CONSTRAINT `user_to_kegiatan_user_id_kegiatan_id_pk` PRIMARY KEY(`user_id`,`kegiatan_id`)
 );
 --> statement-breakpoint
 CREATE TABLE `user_to_kompetensi` (
@@ -158,28 +140,26 @@ CREATE TABLE `user_to_kompetensi` (
 	`kompetensi_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp,
-	CONSTRAINT `user_to_kompetensi_user_id_kompetensi_id_pk` PRIMARY KEY(`user_id`,`kompetensi_id`),
-	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
+	CONSTRAINT `user_to_kompetensi_user_id_kompetensi_id_pk` PRIMARY KEY(`user_id`,`kompetensi_id`)
 );
 --> statement-breakpoint
-ALTER TABLE `agenda_kegiatan` ADD CONSTRAINT `agenda_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `agenda_kegiatan` ADD CONSTRAINT `agenda_kegiatan_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `group_messages` ADD CONSTRAINT `group_messages_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `group_messages` ADD CONSTRAINT `group_messages_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `jumlah_kegiatan` ADD CONSTRAINT `jumlah_kegiatan_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `kompetensi_to_kegiatan` ADD CONSTRAINT `kompetensi_to_kegiatan_kompetensi_id_kompetensi_kompetensi_id_fk` FOREIGN KEY (`kompetensi_id`) REFERENCES `kompetensi`(`kompetensi_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `kompetensi_to_kegiatan` ADD CONSTRAINT `kompetensi_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `lampiran_kegiatan` ADD CONSTRAINT `lampiran_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `messages_to_attachments` ADD CONSTRAINT `fk_msg_attach_msg` FOREIGN KEY (`messages_id`) REFERENCES `group_messages`(`messages_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `messages_to_attachments` ADD CONSTRAINT `fk_attach_msg` FOREIGN KEY (`attachment_id`) REFERENCES `messages_attachments`(`attachment_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `progress_agenda` ADD CONSTRAINT `progress_agenda_agenda_id_agenda_kegiatan_agenda_id_fk` FOREIGN KEY (`agenda_id`) REFERENCES `agenda_kegiatan`(`agenda_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `progress_to_attachments` ADD CONSTRAINT `fk_prog_attach` FOREIGN KEY (`progress_id`) REFERENCES `progress_agenda`(`progress_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `progress_to_attachments` ADD CONSTRAINT `fk_attach_prog` FOREIGN KEY (`attachment_id`) REFERENCES `progress_attachment`(`attachment_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `user_to_kegiatan` ADD CONSTRAINT `user_to_kegiatan_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `user_to_kegiatan` ADD CONSTRAINT `user_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `user_to_kompetensi` ADD CONSTRAINT `user_to_kompetensi_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE `user_to_kompetensi` ADD CONSTRAINT `user_to_kompetensi_kompetensi_id_kompetensi_kompetensi_id_fk` FOREIGN KEY (`kompetensi_id`) REFERENCES `kompetensi`(`kompetensi_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `agenda_kegiatan` ADD CONSTRAINT `agenda_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `agenda_kegiatan` ADD CONSTRAINT `agenda_kegiatan_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `group_messages` ADD CONSTRAINT `group_messages_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `group_messages` ADD CONSTRAINT `group_messages_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `jumlah_kegiatan` ADD CONSTRAINT `jumlah_kegiatan_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `kompetensi_to_kegiatan` ADD CONSTRAINT `kompetensi_to_kegiatan_kompetensi_id_kompetensi_kompetensi_id_fk` FOREIGN KEY (`kompetensi_id`) REFERENCES `kompetensi`(`kompetensi_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `kompetensi_to_kegiatan` ADD CONSTRAINT `kompetensi_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `lampiran_kegiatan` ADD CONSTRAINT `lampiran_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `messages_to_attachments` ADD CONSTRAINT `fk_msg_attach_msg` FOREIGN KEY (`messages_id`) REFERENCES `group_messages`(`messages_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `messages_to_attachments` ADD CONSTRAINT `fk_attach_msg` FOREIGN KEY (`attachment_id`) REFERENCES `messages_attachments`(`attachment_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `progress_agenda` ADD CONSTRAINT `progress_agenda_agenda_id_agenda_kegiatan_agenda_id_fk` FOREIGN KEY (`agenda_id`) REFERENCES `agenda_kegiatan`(`agenda_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `progress_to_attachments` ADD CONSTRAINT `fk_prog_attach` FOREIGN KEY (`progress_id`) REFERENCES `progress_agenda`(`progress_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `progress_to_attachments` ADD CONSTRAINT `fk_attach_prog` FOREIGN KEY (`attachment_id`) REFERENCES `progress_attachment`(`attachment_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `user_to_kegiatan` ADD CONSTRAINT `user_to_kegiatan_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `user_to_kegiatan` ADD CONSTRAINT `user_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `user_to_kompetensi` ADD CONSTRAINT `user_to_kompetensi_user_id_user_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`user_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE `user_to_kompetensi` ADD CONSTRAINT `user_to_kompetensi_kompetensi_id_kompetensi_kompetensi_id_fk` FOREIGN KEY (`kompetensi_id`) REFERENCES `kompetensi`(`kompetensi_id`) ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 CREATE INDEX `jadwalAgenda_index` ON `agenda_kegiatan` (`jadwal_agenda`);--> statement-breakpoint
 CREATE INDEX `namaAgenda_index` ON `agenda_kegiatan` (`nama_agenda`);--> statement-breakpoint
 CREATE INDEX `user_index` ON `jumlah_kegiatan` (`user_id`);--> statement-breakpoint

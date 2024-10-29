@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "6549b6e7-4121-486b-80e5-42ac48591881",
+  "id": "d16cd81a-038e-4d8a-a1a5-1f15f5b299e3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agenda_kegiatan": {
@@ -70,13 +70,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -106,8 +99,8 @@
           "columnsTo": [
             "kegiatan_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "agenda_kegiatan_user_id_user_user_id_fk": {
           "name": "agenda_kegiatan_user_id_user_user_id_fk",
@@ -119,8 +112,8 @@
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -179,13 +172,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {},
@@ -200,8 +186,8 @@
           "columnsTo": [
             "kegiatan_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "group_messages_user_id_user_user_id_fk": {
           "name": "group_messages_user_id_user_user_id_fk",
@@ -213,8 +199,8 @@
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -274,13 +260,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -310,8 +289,8 @@
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -371,13 +350,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -446,13 +418,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {},
@@ -499,13 +464,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -528,8 +486,8 @@
           "columnsTo": [
             "kompetensi_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "kompetensi_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk": {
           "name": "kompetensi_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk",
@@ -541,8 +499,8 @@
           "columnsTo": [
             "kegiatan_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -554,14 +512,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "deleted_at": {
-          "name": "deleted_at",
-          "columns": [
-            "deleted_at"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "lampiran_kegiatan": {
@@ -609,13 +560,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -638,8 +582,8 @@
           "columnsTo": [
             "kegiatan_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -691,13 +635,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {},
@@ -744,13 +681,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -798,14 +728,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "deleted_at": {
-          "name": "deleted_at",
-          "columns": [
-            "deleted_at"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "progress_agenda": {
@@ -846,13 +769,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {},
@@ -867,8 +783,8 @@
           "columnsTo": [
             "agenda_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -913,13 +829,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -967,14 +876,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "deleted_at": {
-          "name": "deleted_at",
-          "columns": [
-            "deleted_at"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "progress_attachment": {
@@ -1015,13 +917,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {},
@@ -1104,13 +999,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -1215,13 +1103,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -1251,8 +1132,8 @@
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "user_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk": {
           "name": "user_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk",
@@ -1264,8 +1145,8 @@
           "columnsTo": [
             "kegiatan_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -1277,14 +1158,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "deleted_at": {
-          "name": "deleted_at",
-          "columns": [
-            "deleted_at"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "user_to_kompetensi": {
@@ -1318,13 +1192,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -1347,8 +1214,8 @@
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "user_to_kompetensi_kompetensi_id_kompetensi_kompetensi_id_fk": {
           "name": "user_to_kompetensi_kompetensi_id_kompetensi_kompetensi_id_fk",
@@ -1360,8 +1227,8 @@
           "columnsTo": [
             "kompetensi_id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -1373,14 +1240,7 @@
           ]
         }
       },
-      "uniqueConstraints": {
-        "deleted_at": {
-          "name": "deleted_at",
-          "columns": [
-            "deleted_at"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     }
   },

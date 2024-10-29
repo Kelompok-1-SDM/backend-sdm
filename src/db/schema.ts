@@ -24,15 +24,14 @@ export const users = mysqlTable('user', {
 });
 
 export const usersToKompetensis = mysqlTable('user_to_kompetensi', {
-    userId: varchar({ length: 128 }).notNull().references(() => users.userId),
-    kompetensiId: varchar({ length: 128 }).notNull().references(() => kompetensis.kompetensiId),
+    userId: varchar({ length: 128 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    kompetensiId: varchar({ length: 128 }).references(() => kompetensis.kompetensiId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     ...timestampsHelper
 }, (table) => {
     return {
         userIdx: index('user_index').on(table.userId),
-        pk: primaryKey({ columns: [table.userId, table.kompetensiId] }),
-        deletedAt: unique('deleted_at').on(table.deletedAt)
+        pk: primaryKey({ columns: [table.userId, table.kompetensiId] })
     }
 });
 
@@ -61,15 +60,14 @@ export const kompetensis = mysqlTable('kompetensi', {
 });
 
 export const kompetensisToKegiatans = mysqlTable('kompetensi_to_kegiatan', {
-    kompetensiId: varchar({ length: 128 }).notNull().references(() => kompetensis.kompetensiId),
-    kegiatanId: varchar({ length: 128 }).notNull().references(() => kegiatans.kegiatanId),
+    kompetensiId: varchar({ length: 128 }).references(() => kompetensis.kompetensiId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    kegiatanId: varchar({ length: 128 }).references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     ...timestampsHelper
 }, (table) => {
     return {
         kompetensiIdx: index('kompetensi_index').on(table.kompetensiId),
-        pk: primaryKey({ columns: [table.kompetensiId, table.kegiatanId] }),
-        deletedAt: unique('deleted_at').on(table.deletedAt)
+        pk: primaryKey({ columns: [table.kompetensiId, table.kegiatanId] })
     }
 });
 
@@ -115,8 +113,8 @@ export const kegiatanRelations = relations(kegiatans, ({ many }) => ({
 }));
 
 export const usersToKegiatans = mysqlTable('user_to_kegiatan', {
-    userId: varchar({ length: 128 }).notNull().references(() => users.userId),
-    kegiatanId: varchar({ length: 128 }).notNull().references(() => kegiatans.kegiatanId), // Fix here
+    userId: varchar({ length: 128 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    kegiatanId: varchar({ length: 128 }).references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(), // Fix here
 
     status: mysqlEnum(['ditugaskan', 'selesai']).default('ditugaskan'),
     roleKegiatan: mysqlEnum(['pic', 'anggota']).default('anggota'),
@@ -126,8 +124,7 @@ export const usersToKegiatans = mysqlTable('user_to_kegiatan', {
     return {
         userIdx: index('user_index').on(table.userId),
         kegiatanIdx: index('kegiatan_index').on(table.kegiatanId),
-        pk: primaryKey({ columns: [table.userId, table.kegiatanId] }),
-        deletedAt: unique('deleted_at').on(table.deletedAt)
+        pk: primaryKey({ columns: [table.userId, table.kegiatanId] })
     }
 });
 
@@ -144,7 +141,7 @@ export const usersToKegiatansRelations = relations(usersToKegiatans, ({ one }) =
 }));
 
 export const jumlahKegiatan = mysqlTable('jumlah_kegiatan', {
-    userId: varchar({ length: 128 }).notNull().references(() => users.userId),
+    userId: varchar({ length: 128 }).notNull().references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
     year: year().notNull(),
     month: tinyint().notNull(),
     jumlahKegiatan: int().default(0).notNull(),
@@ -167,7 +164,7 @@ export const jumlahKegiatanRelations = relations(jumlahKegiatan, ({ one }) => ({
 
 export const lampiranKegiatans = mysqlTable('lampiran_kegiatan', {
     lampiranId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    kegiatanId: varchar({ length: 128 }).notNull().references(() => kegiatans.kegiatanId),
+    kegiatanId: varchar({ length: 128 }).references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     nama: varchar({ length: 255 }).notNull(),
     url: longtext().notNull(),
@@ -189,8 +186,8 @@ export const lampiranKegiatansRelations = relations(lampiranKegiatans, ({ one })
 
 export const agendaKegiatans = mysqlTable('agenda_kegiatan', {
     agendaId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    kegiatanId: varchar({ length: 128 }).notNull().references(() => kegiatans.kegiatanId),
-    userId: varchar({ length: 128 }).notNull().references(() => users.userId),
+    kegiatanId: varchar({ length: 128 }).references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    userId: varchar({ length: 128 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     jadwalAgenda: datetime().notNull(),
     namaAgenda: varchar({ length: 255 }).notNull(),
@@ -215,7 +212,7 @@ export const agendaKegiatansRelations = relations(agendaKegiatans, ({ one, many 
 
 export const progressAgenda = mysqlTable('progress_agenda', {
     progressId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    agendaId: varchar({ length: 128 }).notNull().references(() => (agendaKegiatans.agendaId)),
+    agendaId: varchar({ length: 128 }).notNull().references(() => (agendaKegiatans.agendaId), { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     deskripsiProgress: longtext().notNull(),
 
@@ -263,7 +260,6 @@ export const progressAgendaToProgressAttachment = mysqlTable('progress_to_attach
         }),
         messageIdx: index('progress_index').on(table.progressId),
         pk: primaryKey({ columns: [table.progressId] }),
-        deletedAt: unique('deleted_at').on(table.deletedAt)
     };
 })
 
@@ -280,8 +276,8 @@ export const progressAgendaToProgressAttachmentRelations = relations(progressAge
 
 export const groupsMessages = mysqlTable('group_messages', {
     messagesId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    kegiatanId: varchar({ length: 128 }).notNull().references(() => kegiatans.kegiatanId),
-    userId: varchar({ length: 128 }).notNull().references(() => users.userId),
+    kegiatanId: varchar({ length: 128 }).notNull().references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    userId: varchar({ length: 128 }).notNull().references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     text: longtext(),
 
@@ -333,8 +329,7 @@ export const messagesToAttachments = mysqlTable('messages_to_attachments', {
             name: 'fk_attach_msg'  // Shortened name for foreign key
         }),
         messageIdx: index('message_index').on(table.messagesId),
-        pk: primaryKey({ columns: [table.messagesId] }),
-        deletedAt: unique('deleted_at').on(table.deletedAt)
+        pk: primaryKey({ columns: [table.messagesId] })
     };
 });
 
