@@ -1,4 +1,4 @@
-import { int, datetime, mysqlEnum, text, varchar, mysqlTable, longtext, year, index, foreignKey } from 'drizzle-orm/mysql-core';
+import { int, datetime, mysqlEnum, text, varchar, mysqlTable, longtext, year, index, foreignKey, tinyint, primaryKey, unique } from 'drizzle-orm/mysql-core';
 import { createId } from '@paralleldrive/cuid2';
 import { sql } from 'drizzle-orm/sql';
 import { timestampsHelper } from './helper';
@@ -30,7 +30,9 @@ export const usersToKompetensis = mysqlTable('user_to_kompetensi', {
     ...timestampsHelper
 }, (table) => {
     return {
-        userIdx: index('user_index').on(table.userId)
+        userIdx: index('user_index').on(table.userId),
+        pk: primaryKey({ columns: [table.userId, table.kompetensiId] }),
+        deletedAt: unique('deleted_at').on(table.deletedAt)
     }
 });
 
@@ -65,7 +67,9 @@ export const kompetensisToKegiatans = mysqlTable('kompetensi_to_kegiatan', {
     ...timestampsHelper
 }, (table) => {
     return {
-        kompetensiIdx: index('kompetensi_index').on(table.kompetensiId)
+        kompetensiIdx: index('kompetensi_index').on(table.kompetensiId),
+        pk: primaryKey({ columns: [table.kompetensiId, table.kegiatanId] }),
+        deletedAt: unique('deleted_at').on(table.deletedAt)
     }
 });
 
@@ -120,7 +124,10 @@ export const usersToKegiatans = mysqlTable('user_to_kegiatan', {
     ...timestampsHelper
 }, (table) => {
     return {
-        userIdx: index('user_index').on(table.userId)
+        userIdx: index('user_index').on(table.userId),
+        kegiatanIdx: index('kegiatan_index').on(table.kegiatanId),
+        pk: primaryKey({ columns: [table.userId, table.kegiatanId] }),
+        deletedAt: unique('deleted_at').on(table.deletedAt)
     }
 });
 
@@ -139,7 +146,7 @@ export const usersToKegiatansRelations = relations(usersToKegiatans, ({ one }) =
 export const jumlahKegiatan = mysqlTable('jumlah_kegiatan', {
     userId: varchar({ length: 128 }).notNull().references(() => users.userId),
     year: year().notNull(),
-    month: mysqlEnum(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']).notNull(),
+    month: tinyint().notNull(),
     jumlahKegiatan: int().default(0).notNull(),
 
     ...timestampsHelper
@@ -255,6 +262,8 @@ export const progressAgendaToProgressAttachment = mysqlTable('progress_to_attach
             name: 'fk_attach_prog'  // Shortened name for foreign key
         }),
         messageIdx: index('progress_index').on(table.progressId),
+        pk: primaryKey({ columns: [table.progressId] }),
+        deletedAt: unique('deleted_at').on(table.deletedAt)
     };
 })
 
@@ -324,6 +333,8 @@ export const messagesToAttachments = mysqlTable('messages_to_attachments', {
             name: 'fk_attach_msg'  // Shortened name for foreign key
         }),
         messageIdx: index('message_index').on(table.messagesId),
+        pk: primaryKey({ columns: [table.messagesId] }),
+        deletedAt: unique('deleted_at').on(table.deletedAt)
     };
 });
 

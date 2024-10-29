@@ -11,6 +11,7 @@ import { faker } from '@faker-js/faker';
 import mysql from "mysql2/promise";
 import { dbCredentials } from '../../drizzle.config';
 import { exit } from 'process';
+import { and, eq } from 'drizzle-orm';
 
 const poolConnection = mysql.createPool(dbCredentials);
 
@@ -65,15 +66,27 @@ const seedUsersToKompetensis = async () => {
     const userRecords = await db.select().from(users);
     const kompetensiRecords = await db.select().from(kompetensis);
 
-    const userToKompetensiSeeds = Array.from({ length: 15 }).map(() => ({
-        userId: faker.helpers.arrayElement(userRecords).userId,
-        kompetensiId: faker.helpers.arrayElement(kompetensiRecords).kompetensiId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+    for (let i = 0; i < 15; i++) {
+        const userId = faker.helpers.arrayElement(userRecords).userId;
+        const kompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
 
-    await db.insert(usersToKompetensis).values(userToKompetensiSeeds);
-    console.log(`Seeded ${userToKompetensiSeeds.length} user-competency relationships`);
+        // Check if the relationship already exists
+        const existingRecord = await db
+            .select()
+            .from(usersToKompetensis)
+            .where(and(
+                eq(usersToKompetensis.userId, userId),
+                eq(usersToKompetensis.kompetensiId, kompetensiId)
+            ));
+
+        if (existingRecord.length === 0) {
+            await db.insert(usersToKompetensis).values({
+                userId: userId,
+                kompetensiId: kompetensiId,
+            });
+        }
+    }
+    console.log(`Seeded usersToKompetensis`);
 };
 
 // Seed for 'usersToKegiatans' junction table
@@ -81,17 +94,31 @@ const seedUsersToKegiatans = async () => {
     const userRecords = await db.select().from(users);
     const kegiatanRecords = await db.select().from(kegiatans);
 
-    const userToKegiatanSeeds = Array.from({ length: 15 }).map(() => ({
-        userId: faker.helpers.arrayElement(userRecords).userId,
-        kegiatanId: faker.helpers.arrayElement(kegiatanRecords).kegiatanId,
-        status: faker.helpers.arrayElement(['ditugaskan', 'selesai']),
-        roleKegiatan: faker.helpers.arrayElement(['pic', 'anggota']),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+    for (let i = 0; i < 15; i++) {
+        const userId = faker.helpers.arrayElement(userRecords).userId;
+        const kegiatanId = faker.helpers.arrayElement(kegiatanRecords).kegiatanId;
 
-    await db.insert(usersToKegiatans).values(userToKegiatanSeeds);
-    console.log(`Seeded ${userToKegiatanSeeds.length} user-kegiatan relationships`);
+        // Check if the relationship already exists
+        const existingRecord = await db
+            .select()
+            .from(usersToKegiatans)
+            .where(and(
+                eq(usersToKegiatans.userId, userId),
+                eq(usersToKegiatans.kegiatanId, kegiatanId)
+            ));
+
+        if (existingRecord.length === 0) {
+            await db.insert(usersToKegiatans).values({
+                userId,
+                kegiatanId,
+                status: faker.helpers.arrayElement(['ditugaskan', 'selesai']),
+                roleKegiatan: faker.helpers.arrayElement(['pic', 'anggota']),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+        }
+    }
+    console.log(`Seeded usersToKegiatans`);
 };
 
 // Seed for 'jumlahKegiatan' table
@@ -101,7 +128,7 @@ const seedJumlahKegiatan = async () => {
     const jumlahKegiatanSeeds = Array.from({ length: 15 }).map(() => ({
         userId: faker.helpers.arrayElement(userRecords).userId,
         year: faker.date.past().getFullYear(),
-        month: faker.helpers.arrayElement(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']),
+        month: faker.helpers.arrayElement([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
         jumlahKegiatan: faker.number.int({ min: 1, max: 10 }),
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -164,7 +191,7 @@ const seedprogressAgenda = async () => {
 
 // Seed for 'progressAttachment' table
 const seedProgressAttachment = async () => {
-    const attachmentSeeds = Array.from({ length: 10 }).map(() => ({
+    const attachmentSeeds = Array.from({ length: 30 }).map(() => ({
         hash: faker.string.uuid(),
         url: faker.internet.url(),
         createdAt: new Date(),
@@ -180,15 +207,26 @@ const seedProgressToAttachments = async () => {
     const progressRecords = await db.select().from(progressAgenda);
     const attachmentRecords = await db.select().from(progressAttachments);
 
-    const progressToAttachmentSeeds = Array.from({ length: 30 }).map(() => ({
-        progressId: faker.helpers.arrayElement(progressRecords).progressId,
-        attachmentId: faker.helpers.arrayElement(attachmentRecords).attachmentId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+    for (let i = 0; i < 30; i++) {
+        const progressId = faker.helpers.arrayElement(progressRecords).progressId;
+        const attachmentId = faker.helpers.arrayElement(attachmentRecords).attachmentId;
 
-    await db.insert(progressAgendaToProgressAttachment).values(progressToAttachmentSeeds);
-    console.log(`Seeded ${progressToAttachmentSeeds.length} message-to-attachment relationships`);
+        // Check if the relationship already exists
+        const existingRecord = await db
+            .select()
+            .from(progressAgendaToProgressAttachment)
+            .where(and(
+                eq(progressAgendaToProgressAttachment.progressId, progressId),
+            ));
+
+        if (existingRecord.length === 0) {
+            await db.insert(progressAgendaToProgressAttachment).values({
+                progressId,
+                attachmentId,
+            });
+        }
+    }
+    console.log(`Seeded progressToAttachments`);
 };
 
 
@@ -227,15 +265,25 @@ const seedMessagesToAttachments = async () => {
     const messageRecords = await db.select().from(groupsMessages);
     const attachmentRecords = await db.select().from(messagesAttachment);
 
-    const messageToAttachmentSeeds = Array.from({ length: 15 }).map(() => ({
-        messagesId: faker.helpers.arrayElement(messageRecords).messagesId,
-        attachmentId: faker.helpers.arrayElement(attachmentRecords).attachmentId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+    for (let i = 0; i < 15; i++) {
+        const messagesId = faker.helpers.arrayElement(messageRecords).messagesId;
+        const attachmentId = faker.helpers.arrayElement(attachmentRecords).attachmentId;
 
-    await db.insert(messagesToAttachments).values(messageToAttachmentSeeds);
-    console.log(`Seeded ${messageToAttachmentSeeds.length} message-to-attachment relationships`);
+        // Check if the relationship already exists
+        const existingRecord = await db
+            .select()
+            .from(messagesToAttachments)
+            .where(and(
+                eq(messagesToAttachments.messagesId, messagesId),
+            ));
+        if (existingRecord.length === 0) {
+            await db.insert(messagesToAttachments).values({
+                messagesId,
+                attachmentId,
+            });
+        }
+    }
+    console.log(`Seeded messagesToAttachments`);
 };
 
 // Seed for 'kompetensiToKegiatans' junction table
@@ -243,15 +291,27 @@ const seedKompetensiToKegiatans = async () => {
     const kompetensiRecords = await db.select().from(kompetensis);
     const kegiatanRecords = await db.select().from(kegiatans);
 
-    const kompetensiToKegiatanSeeds = Array.from({ length: 15 }).map(() => ({
-        kompetensiId: faker.helpers.arrayElement(kompetensiRecords).kompetensiId,
-        kegiatanId: faker.helpers.arrayElement(kegiatanRecords).kegiatanId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+    for (let i = 0; i < 15; i++) {
+        const kompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
+        const kegiatanId = faker.helpers.arrayElement(kegiatanRecords).kegiatanId;
 
-    await db.insert(kompetensisToKegiatans).values(kompetensiToKegiatanSeeds);
-    console.log(`Seeded ${kompetensiToKegiatanSeeds.length} kompetensi-to-kegiatan relationships`);
+        // Check if the relationship already exists
+        const existingRecord = await db
+            .select()
+            .from(kompetensisToKegiatans)
+            .where(and(
+                eq(kompetensisToKegiatans.kompetensiId, kompetensiId),
+                eq(kompetensisToKegiatans.kegiatanId, kegiatanId)
+            ));
+
+        if (existingRecord.length === 0) {
+            await db.insert(kompetensisToKegiatans).values({
+                kompetensiId,
+                kegiatanId,
+            });
+        }
+    }
+    console.log(`Seeded kompetensiToKegiatans`);
 };
 
 
@@ -260,18 +320,18 @@ const runSeeds = async () => {
     await seedUsers();
     await seedKompetensis();
     await seedKegiatans();
-    await seedKompetensiToKegiatans();
-    await seedUsersToKompetensis();
-    await seedUsersToKegiatans();
     await seedJumlahKegiatan();
     await seedLampiranKegiatans();
     await seedAgendaKegiatans();
     await seedprogressAgenda();
     await seedProgressAttachment();
-    await seedProgressToAttachments();
     await seedGroupsMessages();
     await seedMessagesAttachment();
+    await seedKompetensiToKegiatans();
+    await seedUsersToKompetensis();
+    await seedUsersToKegiatans();
     await seedMessagesToAttachments();
+    await seedProgressToAttachments();
     console.log('All seed data inserted');
     exit()
 };

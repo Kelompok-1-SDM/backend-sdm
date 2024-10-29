@@ -26,7 +26,7 @@ CREATE TABLE `group_messages` (
 CREATE TABLE `jumlah_kegiatan` (
 	`user_id` varchar(128) NOT NULL,
 	`year` year NOT NULL,
-	`month` enum('1','2','3','4','5','6','7','8','9','10','11','12') NOT NULL,
+	`month` tinyint NOT NULL,
 	`jumlah_kegiatan` int NOT NULL DEFAULT 0,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
@@ -59,7 +59,9 @@ CREATE TABLE `kompetensi_to_kegiatan` (
 	`kegiatan_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp
+	`deleted_at` timestamp,
+	CONSTRAINT `kompetensi_to_kegiatan_kompetensi_id_kegiatan_id_pk` PRIMARY KEY(`kompetensi_id`,`kegiatan_id`),
+	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
 );
 --> statement-breakpoint
 CREATE TABLE `lampiran_kegiatan` (
@@ -88,7 +90,9 @@ CREATE TABLE `messages_to_attachments` (
 	`attachment_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp
+	`deleted_at` timestamp,
+	CONSTRAINT `messages_to_attachments_messages_id_pk` PRIMARY KEY(`messages_id`),
+	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
 );
 --> statement-breakpoint
 CREATE TABLE `progress_agenda` (
@@ -106,7 +110,9 @@ CREATE TABLE `progress_to_attachments` (
 	`attachment_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp
+	`deleted_at` timestamp,
+	CONSTRAINT `progress_to_attachments_progress_id_pk` PRIMARY KEY(`progress_id`),
+	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
 );
 --> statement-breakpoint
 CREATE TABLE `progress_attachment` (
@@ -142,7 +148,9 @@ CREATE TABLE `user_to_kegiatan` (
 	`role_kegiatan` enum('pic','anggota') DEFAULT 'anggota',
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp
+	`deleted_at` timestamp,
+	CONSTRAINT `user_to_kegiatan_user_id_kegiatan_id_pk` PRIMARY KEY(`user_id`,`kegiatan_id`),
+	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
 );
 --> statement-breakpoint
 CREATE TABLE `user_to_kompetensi` (
@@ -150,7 +158,9 @@ CREATE TABLE `user_to_kompetensi` (
 	`kompetensi_id` varchar(128) NOT NULL,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
-	`deleted_at` timestamp
+	`deleted_at` timestamp,
+	CONSTRAINT `user_to_kompetensi_user_id_kompetensi_id_pk` PRIMARY KEY(`user_id`,`kompetensi_id`),
+	CONSTRAINT `deleted_at` UNIQUE(`deleted_at`)
 );
 --> statement-breakpoint
 ALTER TABLE `agenda_kegiatan` ADD CONSTRAINT `agenda_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk` FOREIGN KEY (`kegiatan_id`) REFERENCES `kegiatan`(`kegiatan_id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -186,4 +196,5 @@ CREATE INDEX `nama_index` ON `user` (`nama`);--> statement-breakpoint
 CREATE INDEX `email_index` ON `user` (`email`);--> statement-breakpoint
 CREATE INDEX `role_index` ON `user` (`role`);--> statement-breakpoint
 CREATE INDEX `user_index` ON `user_to_kegiatan` (`user_id`);--> statement-breakpoint
+CREATE INDEX `kegiatan_index` ON `user_to_kegiatan` (`kegiatan_id`);--> statement-breakpoint
 CREATE INDEX `user_index` ON `user_to_kompetensi` (`user_id`);

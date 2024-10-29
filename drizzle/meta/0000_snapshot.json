@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "3c28fa5a-3857-4d00-9a8e-2aa1da35c0e2",
+  "id": "6549b6e7-4121-486b-80e5-42ac48591881",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agenda_kegiatan": {
@@ -247,7 +247,7 @@
         },
         "month": {
           "name": "month",
-          "type": "enum('1','2','3','4','5','6','7','8','9','10','11','12')",
+          "type": "tinyint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -545,8 +545,23 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "compositePrimaryKeys": {
+        "kompetensi_to_kegiatan_kompetensi_id_kegiatan_id_pk": {
+          "name": "kompetensi_to_kegiatan_kompetensi_id_kegiatan_id_pk",
+          "columns": [
+            "kompetensi_id",
+            "kegiatan_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "deleted_at": {
+          "name": "deleted_at",
+          "columns": [
+            "deleted_at"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "lampiran_kegiatan": {
@@ -775,8 +790,22 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "compositePrimaryKeys": {
+        "messages_to_attachments_messages_id_pk": {
+          "name": "messages_to_attachments_messages_id_pk",
+          "columns": [
+            "messages_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "deleted_at": {
+          "name": "deleted_at",
+          "columns": [
+            "deleted_at"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "progress_agenda": {
@@ -930,8 +959,22 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "compositePrimaryKeys": {
+        "progress_to_attachments_progress_id_pk": {
+          "name": "progress_to_attachments_progress_id_pk",
+          "columns": [
+            "progress_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "deleted_at": {
+          "name": "deleted_at",
+          "columns": [
+            "deleted_at"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "progress_attachment": {
@@ -1188,6 +1231,13 @@
             "user_id"
           ],
           "isUnique": false
+        },
+        "kegiatan_index": {
+          "name": "kegiatan_index",
+          "columns": [
+            "kegiatan_id"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -1218,8 +1268,23 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "compositePrimaryKeys": {
+        "user_to_kegiatan_user_id_kegiatan_id_pk": {
+          "name": "user_to_kegiatan_user_id_kegiatan_id_pk",
+          "columns": [
+            "user_id",
+            "kegiatan_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "deleted_at": {
+          "name": "deleted_at",
+          "columns": [
+            "deleted_at"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "user_to_kompetensi": {
@@ -1299,8 +1364,23 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "compositePrimaryKeys": {
+        "user_to_kompetensi_user_id_kompetensi_id_pk": {
+          "name": "user_to_kompetensi_user_id_kompetensi_id_pk",
+          "columns": [
+            "user_id",
+            "kompetensi_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "deleted_at": {
+          "name": "deleted_at",
+          "columns": [
+            "deleted_at"
+          ]
+        }
+      },
       "checkConstraint": {}
     }
   },
