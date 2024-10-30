@@ -2,7 +2,7 @@ import { eq, isNull, sql } from "drizzle-orm";
 import { kompetensis } from "../db/schema";
 import { db } from "./utilsModel";
 
-type KompetensiDataType = typeof kompetensis.$inferInsert
+export type KompetensiDataType = typeof kompetensis.$inferInsert
 
 export async function fetchAllKompentensi() {
     return await db.select().from(kompetensis)

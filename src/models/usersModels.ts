@@ -16,14 +16,20 @@ export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
 }
 
 export async function fetchUserComplete(uidUser: string) {
-    const [res] = await db.select({ ...rest }).from(users)
-        // Join kompetensis
-        .innerJoin(usersToKompetensis, eq(usersToKompetensis.userId, users.userId))
-        .innerJoin(kompetensis, eq(kompetensis.kompetensiId, usersToKompetensis.kompetensiId))
-        // Join jumlah_kegiatan
-        .innerJoin(jumlahKegiatan, eq(jumlahKegiatan.userId, users.userId))
-        .where(eq(users.userId, uidUser));
-    return res
+    let dataUser, dataKompetensi, dataJumlahKegiatan
+    [dataUser] = await db.select({ ...rest }).from(users).where(eq(users.userId, uidUser));
+
+    const columnKompetensi = getTableColumns(kompetensis)
+    dataKompetensi = await db.select(columnKompetensi).from(usersToKompetensis)
+        .rightJoin(kompetensis, eq(usersToKompetensis.kompetensiId, kompetensis.kompetensiId))
+        .where(eq(usersToKompetensis.userId, uidUser))
+
+    dataJumlahKegiatan = await db.select().from(jumlahKegiatan).where(eq(jumlahKegiatan.userId, uidUser))
+    return {
+        user: dataUser,
+        kompetensi: dataKompetensi,
+        jumlah_kegiatan: dataJumlahKegiatan
+    }
 }
 
 export async function fetchUserOnly(uidUser: string) {
@@ -89,9 +95,10 @@ export async function addJumlahKegiatan(uidUser: string, wasDecrement: boolean =
 }
 
 export async function updateUser(uidUser: string, data: Partial<UserDataType>) {
+    let res;
     await db.update(users).set(addTimestamps(data, true)).where(eq(users.userId, uidUser))
-
-    return await db.select().from(users).where(eq(users.userId, uidUser))
+    res = await db.select().from(users).where(eq(users.userId, uidUser))
+    return res
 }
 
 export async function updateKompetensiUser(uidUser: string, uidKompetensi: string[]) {
@@ -113,10 +120,13 @@ export async function updateKompetensiUser(uidUser: string, uidKompetensi: strin
 }
 
 export async function deleteUser(uidUser: string) {
-    await db.delete(users)
-        .where(eq(users.userId, uidUser))
+    const temp = await db.select().from(users).where(eq(users.userId, uidUser))
+    if (temp) {
+        await db.delete(users)
+            .where(eq(users.userId, uidUser))
+    }
 
-    return await db.select().from(users).where(eq(users.userId, uidUser))
+    return temp
 }
 
 export async function deleteUserKompetensi(uidUser: string, uidKompetensi: string[]) {
