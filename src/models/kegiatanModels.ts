@@ -1,120 +1,119 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
-import { agendaKegiatans, kegiatans, kompetensis, kompetensisToKegiatans, lampiranKegiatans, progressAgenda, progressAgendaToProgressAttachment, progressAttachments, users, usersToKegiatans } from "../db/schema";
-import { addTimestamps, db } from "./utilsModel";
+import { and, desc, eq, getTableColumns, sql, count } from "drizzle-orm";
+import { agendaKegiatans, jumlahKegiatan, kegiatans, kompetensis, kompetensisToKegiatans, lampiranKegiatans, users, usersToKegiatans } from "../db/schema";
+import { addTimestamps, batchQuerySize, db } from "./utilsModel";
+import { userTableColumns } from "./usersModels";
+import { userToKegiatanColumns } from "./penugasanModels";
+import { kompetensisColumns } from "./kompetensiModels";
 
 export type KegiatanDataType = typeof kegiatans.$inferInsert
-export type LampiranDataType = typeof lampiranKegiatans.$inferInsert
-export type AgendaKegiatanDataType = typeof agendaKegiatans.$inferInsert
-export type ProgressAgendaDataType = typeof progressAgenda.$inferInsert
-export type ProgressAttachmentDataType = typeof progressAttachments.$inferInsert
-
-export type KegiatanToKompetensiDataType = typeof kompetensisToKegiatans.$inferInsert
-export type UserToKegiatanDataType = typeof usersToKegiatans.$inferInsert
+export const kegiatansColumns = getTableColumns(kegiatans)
 
 export async function fetchAllKegiatan() {
     return await db.select().from(kegiatans)
 }
 
-export async function fetchKegiatanByUser(uidUser: string) {
-    return await db.select().from(users)
-        // Join user_to_kegiatan
-        .innerJoin(usersToKegiatans, eq(usersToKegiatans.userId, users.userId))
-        .innerJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
-        .where(eq(users.userId, uidUser))
+export async function fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser: string, month?: number) {
+    const [jumlahKeg] = await db.select({ count: count(usersToKegiatans.kegiatanId) })
+        .from(usersToKegiatans)
+        .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
+        .where(and(
+            eq(usersToKegiatans.userId, uidUser),
+            eq(usersToKegiatans.status, "ditugaskan"),
+            month ? sql`MONTH(${kegiatans.tanggal}) = ${month}` : undefined
+        ))
+
+    return jumlahKeg.count
 }
 
-export async function fetchKegiatanInfo(uidKegiatan: string, showAllData: boolean = false) {
-    const [res] = await db.select().from(kegiatans)
-        // Join user
-        .innerJoin(usersToKegiatans, eq(usersToKegiatans.kegiatanId, kegiatans.kegiatanId))
-        .innerJoin(users, eq(users.userId, usersToKegiatans.userId))
-        //Join Lampiran Kegiatan
-        .innerJoin(lampiranKegiatans, eq(lampiranKegiatans.kegiatanId, kegiatans.kegiatanId))
-        // Join agenda
-        .innerJoin(agendaKegiatans, eq(agendaKegiatans.kegiatanId, kegiatans.kegiatanId))
-        // Join progress agenda
-        .where(eq(kegiatans.kegiatanId, uidKegiatan))
-    return res
+
+export async function fetchKegiatanByUser(uidUser: string, status?: 'ditugaskan' | 'selesai', wasLimitedTwo: boolean = false) {
+    const [datUser] = await db.select(userTableColumns).from(users).where(eq(users.userId, uidUser));
+
+    // Construct the base query with joins
+    const query = db.select({
+        ...kegiatansColumns,
+        status: usersToKegiatans.status,
+        role: usersToKegiatans.roleKegiatan
+    })
+        .from(usersToKegiatans)
+        .rightJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
+        .where(
+            and(
+                eq(usersToKegiatans.userId, uidUser), // Match user ID
+                status ? eq(usersToKegiatans.status, status) : undefined, // Match status if provided
+            )
+        )
+        .orderBy(desc(kegiatans.tanggal));
+
+    // Apply limit if requested
+    if (wasLimitedTwo) query.limit(2);
+
+    // Execute query
+    const kg = await query;
+
+    // Return the user data with the kegiatan records
+    return {
+        ...datUser,
+        kegiatan: kg
+    };
 }
 
-export async function fetchProgress(uidProgress: string, showAllData: boolean = false) {
-    return await db.select().from(agendaKegiatans)
-        .innerJoin(progressAgenda, eq(progressAgenda.agendaId, agendaKegiatans.agendaId))
-        //Join attachment
-        .innerJoin(progressAgendaToProgressAttachment, eq(progressAgendaToProgressAttachment.progressId, progressAgenda.progressId))
-        .innerJoin(progressAttachments, eq(progressAttachments.attachmentId, progressAgendaToProgressAttachment.attachmentId))
-        .where(eq(agendaKegiatans.kegiatanId, uidProgress))
+
+export async function fetchUserCurrentKegiatan(uidUser: string, datetime: Date) {
+    const [kg] = await db.select({ ...kegiatansColumns, status: usersToKegiatans.status, role: usersToKegiatans.roleKegiatan }).from(usersToKegiatans)
+        .rightJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
+        .where(and(eq(usersToKegiatans.userId, uidUser), eq(kegiatans.tanggal, datetime)))
+
+    return kg
+}
+
+export async function fetchKegiatanByUid(uidKegiatan: string) {
+    const [kgData] = await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
+
+    const userData = await db.select({ ...userToKegiatanColumns, user: { ...userTableColumns } }).from(usersToKegiatans)
+        .rightJoin(users, eq(users.userId, usersToKegiatans.userId))
+        .where(eq(usersToKegiatans.kegiatanId, uidKegiatan))
+
+    const lampiranData = await db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.kegiatanId, uidKegiatan))
+    const agendaData = await db.select().from(agendaKegiatans).where(eq(agendaKegiatans.kegiatanId, uidKegiatan))
+
+    return {
+        ...kgData,
+        user: userData,
+        lampiran: lampiranData,
+        agenda: agendaData
+    }
+}
+
+export async function fetchKegiatanOnly(uidKegiatan: string) {
+    const [temp] = await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
+    return temp
 }
 
 export async function createKegiatan(kegiatanData: KegiatanDataType, listKompetensiUid: string[]) {
-    let idKegiatan;
+    let idKegiatan: { kegiatanId: string };
 
     await db.transaction(async (tx) => {
         [idKegiatan] = await tx.insert(kegiatans).values(addTimestamps(kegiatanData)).$returningId()
 
-        let dat: KegiatanToKompetensiDataType[]
-        for (const kompetensiUid of listKompetensiUid) {
-            dat!.push(addTimestamps({
-                kegiatanId: idKegiatan.kegiatanId,
-                kompetensiId: kompetensiUid
-            }))
+        for (let i = 0; i < listKompetensiUid.length; i += batchQuerySize) {
+            let batch: any[] = listKompetensiUid.slice(i, i + batchQuerySize);
+            batch = batch.map((tex) => {
+                return addTimestamps({
+                    kegiatanId: idKegiatan.kegiatanId,
+                    kompetensiId: tex
+                })
+            })
+            await tx.insert(kompetensisToKegiatans).values(batch).onDuplicateKeyUpdate({ set: { kegiatanId: sql`kegiatan_id` } })
         }
-        await tx.insert(kompetensisToKegiatans).values(dat!).onDuplicateKeyUpdate({ set: { kegiatanId: sql`kegiatan_id` } })
     })
 
-    return await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, idKegiatan!.userId))
-}
-
-export async function tugaskanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid: string, role: 'pic' | 'anggota' }[]) {
-    let dat: UserToKegiatanDataType[]
-    for (const user of listUserDitugaskan) {
-        dat!.push(addTimestamps({
-            kegiatanId: uidKegiatan,
-            userId: user.uid,
-            roleKegiatan: user.role
-        }))
+    const [kg] = await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, idKegiatan!.kegiatanId))
+    const dataKompe = await db.select(kompetensisColumns).from(kompetensisToKegiatans).innerJoin(kompetensis, eq(kompetensis.kompetensiId, kompetensisToKegiatans.kompetensiId)).where(eq(kompetensisToKegiatans.kegiatanId, kg.kegiatanId))
+    return {
+        ...kg,
+        kompetensi: dataKompe
     }
-    await db.insert(usersToKegiatans).values(dat!).onDuplicateKeyUpdate({ set: { userId: sql`user_id` } })
-
-
-    return await db.select().from(kegiatans)
-        .innerJoin(usersToKegiatans, eq(usersToKegiatans.kegiatanId, kegiatans.kegiatanId))
-        .innerJoin(users, eq(users.userId, usersToKegiatans.userId))
-        .where(eq(kegiatans.kegiatanId, uidKegiatan))
-}
-
-export async function createLampiranKegiatan(udidKegiatan: string, dataLampirans: LampiranDataType[]) {
-    await db.insert(lampiranKegiatans).values(addTimestamps(dataLampirans))
-
-    return await db.select().from(kegiatans).innerJoin(lampiranKegiatans, eq(lampiranKegiatans.kegiatanId, kegiatans.kegiatanId)).where(eq(kegiatans.kegiatanId, udidKegiatan))
-}
-
-export async function createAgendaKegiatan(uidKegiatan: string, dataAgendas: AgendaKegiatanDataType[]) {
-    await db.insert(agendaKegiatans).values(addTimestamps(dataAgendas))
-
-    return await db.select().from(agendaKegiatans).where(eq(agendaKegiatans.kegiatanId, uidKegiatan))
-}
-
-export async function createProgressAgenda(dataProgress: ProgressAgendaDataType, dataAttachment?: ProgressAttachmentDataType[]) {
-    let prog
-    await db.transaction(async (tx) => {
-        [prog] = await tx.insert(progressAgenda).values(addTimestamps(dataProgress)).$returningId()
-
-        if (dataAttachment) {
-            for (const attachment of dataAttachment) {
-                const [attach] = await tx.insert(progressAttachments).values(addTimestamps(attachment)).$returningId()
-                await tx.insert(progressAgendaToProgressAttachment).values(addTimestamps({
-                    progressId: prog.progressId,
-                    attachmentId: attach.attachmentId,
-                })).onDuplicateKeyUpdate({ set: { progressId: sql`progress_id` } })
-            }
-        }
-    })
-
-    return await db.select().from(progressAgenda)
-        .innerJoin(progressAgendaToProgressAttachment, eq(progressAgendaToProgressAttachment.progressId, progressAgenda.progressId))
-        .innerJoin(progressAttachments, eq(progressAttachments.attachmentId, progressAgendaToProgressAttachment.attachmentId))
-        .where(eq(progressAgenda.progressId, prog!.progressId))
 }
 
 export async function updateKegiatan(uidKegiatan: string, data: Partial<KegiatanDataType>, listKompetensiUid: string[]) {
@@ -123,113 +122,35 @@ export async function updateKegiatan(uidKegiatan: string, data: Partial<Kegiatan
             .set(addTimestamps(data, true))
             .where(eq(kegiatans.kegiatanId, uidKegiatan))
 
-        let dat: KegiatanToKompetensiDataType[]
-        for (const kompetensiId of listKompetensiUid) {
-            dat!.push(addTimestamps({
-                kegiatanId: uidKegiatan,
-                kompetensiId: kompetensiId,
-            }))
-        }
-        await tx.insert(kompetensisToKegiatans).values(dat!).onDuplicateKeyUpdate({
-            set: addTimestamps({
-                kegiatan_id: sql`kegiatan_id`
-            }, true)
-        })
-    })
-
-    return await db.select().from(kegiatans)
-        // Join to kompetensi
-        .innerJoin(kompetensisToKegiatans, eq(kompetensisToKegiatans.kegiatanId, kegiatans.kegiatanId))
-        .innerJoin(kompetensis, eq(kompetensis.kompetensiId, kompetensisToKegiatans.kompetensiId))
-        .where(eq(kegiatans.kegiatanId, uidKegiatan))
-}
-
-export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitugakskan: { uid: string, role: 'pic' | 'anggota', status: 'ditugaskan' | 'selesai' }[]) {
-    let dat: UserToKegiatanDataType[]
-    for (const user of listUserDitugakskan) {
-        dat!.push(addTimestamps({
-            kegiatanId: uidKegiatan,
-            userId: user.uid,
-            roleKegiatan: user.role,
-            status: user.status,
-        }))
-    }
-    await db.insert(usersToKegiatans).values(dat!).onDuplicateKeyUpdate({
-        set: addTimestamps({
-            kegiatanId: sql`kegiatan_id`
-        }, true)
-    })
-
-    return await db.select().from(kegiatans)
-        .innerJoin(usersToKegiatans, eq(usersToKegiatans.kegiatanId, kegiatans.kegiatanId))
-        .innerJoin(users, eq(users.userId, usersToKegiatans.userId))
-        .where(eq(kegiatans.kegiatanId, uidKegiatan))
-}
-
-export async function updateLampiranKegiatan(uidLampiran: string, dataLampiran: LampiranDataType) {
-    await db.update(lampiranKegiatans).set(addTimestamps(dataLampiran, true)).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
-
-    return await db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.kegiatanId, uidLampiran))
-}
-
-export async function updateAgendaKegiatan(uidAgenda: string, data: AgendaKegiatanDataType) {
-    await db.update(agendaKegiatans).set(addTimestamps(data, true)).where(eq(agendaKegiatans.agendaId, uidAgenda))
-
-    return await db.select().from(agendaKegiatans).where(eq(agendaKegiatans.agendaId, uidAgenda))
-}
-
-export async function updateProgressAgenda(uidProgress: string, data: ProgressAgendaDataType, dataAttachment?: ProgressAttachmentDataType[]) {
-    await db.transaction(async (tx) => {
-        await tx.update(progressAgenda).set(addTimestamps(data, true)).where(eq(progressAgenda.progressId, uidProgress))
-
-        if (dataAttachment) {
-            for (const attachment of dataAttachment) {
-                const [attach] = await tx.insert(progressAttachments).values(addTimestamps(attachment)).$returningId()
-                await tx.insert(progressAgendaToProgressAttachment).values(addTimestamps({
-                    progressId: uidProgress,
-                    attachmentId: attach.attachmentId,
-                })).onDuplicateKeyUpdate({ set: addTimestamps({ progressId: sql`progress_id` }) })
+        if (listKompetensiUid.length !== 0) {
+            for (let i = 0; i < listKompetensiUid.length; i += batchQuerySize) {
+                let batch: any[] = listKompetensiUid.slice(i, i + batchQuerySize);
+                batch = batch.map((tex) => {
+                    return addTimestamps({
+                        kegiatanId: uidKegiatan,
+                        kompetensiId: tex
+                    })
+                })
+                await tx.insert(kompetensisToKegiatans).values(batch).onDuplicateKeyUpdate({
+                    set: {
+                        kegiatanId: sql`kegiatan_id`,
+                    }
+                })
             }
         }
     })
+
+    const [kg] = await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
+    const dataKompe = await db.select(kompetensisColumns).from(kompetensisToKegiatans).innerJoin(kompetensis, eq(kompetensis.kompetensiId, kompetensisToKegiatans.kompetensiId)).where(eq(kompetensisToKegiatans.kegiatanId, kg.kegiatanId))
+    return {
+        ...kg,
+        kompetensi: dataKompe
+    }
 }
 
 export async function deleteKegiatan(uidKegiatan: string) {
+    const [temp] = await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
     await db.delete(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
 
-    return await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
-}
-
-export async function deletePenugasan(uidKegiatan: string, uidUser: string) {
-    await db.delete(usersToKegiatans).where(and(eq(usersToKegiatans.kegiatanId, uidKegiatan), eq(usersToKegiatans.userId, uidUser)))
-
-    return await db.select().from(usersToKegiatans).where(and(eq(usersToKegiatans.kegiatanId, uidKegiatan), eq(usersToKegiatans.userId, uidUser)))
-}
-
-export async function deleteLampiranKegiatan(uidLampiran: string) {
-    await db.delete(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
-
-    return await db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
-}
-
-export async function deleteAgendaKegiatan(uidAgenda: string) {
-    await db.delete(agendaKegiatans).where(eq(agendaKegiatans.agendaId, uidAgenda))
-
-    return await db.select().from(agendaKegiatans).where(eq(agendaKegiatans.agendaId, uidAgenda))
-}
-
-export async function deleteProgressAgenda(uidProgress: string) {
-    await db.transaction(async (tx) => {
-        await tx.delete(progressAgenda).where(eq(progressAgenda.agendaId, uidProgress))
-
-        const dat = await tx.select({ id: progressAgendaToProgressAttachment.attachmentId }).from(progressAgendaToProgressAttachment).where(eq(progressAgendaToProgressAttachment.progressId, uidProgress))
-        for (const id of dat) {
-            await tx.delete(progressAttachments).where(eq(progressAttachments.attachmentId, id.id))
-        }
-    })
-
-    return await db.select().from(progressAgenda)
-        .innerJoin(progressAgendaToProgressAttachment, eq(progressAgendaToProgressAttachment.progressId, progressAgenda.agendaId))
-        .innerJoin(progressAttachments, eq(progressAttachments.attachmentId, progressAgendaToProgressAttachment.attachmentId))
-        .where(eq(progressAgenda.agendaId, uidProgress))
+    return temp
 }

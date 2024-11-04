@@ -15,16 +15,21 @@ export async function fetchUsers(req: Request, res: Response) {
         return
     }
 
+    let { uid, role } = req.query
     try {
-        let { uid, role } = req.query
         let data: any
 
         if (uid) {
-            data = await userService.fetchUserComplete(uid as string)
+            data = await userService.fetchUser(uid as string)
         } else if (role) {
             data = await userService.fetchUserByRole(role as 'admin' | 'manajemen' | 'dosen')
         } else {
             data = await userService.fetchAllUsers()
+        }
+
+        if (data === "user_is_not_found") {
+            res.status(404).json(createResponse(false, null, "User not found"))
+            return
         }
 
         res.status(200).json(createResponse(
@@ -32,14 +37,114 @@ export async function fetchUsers(req: Request, res: Response) {
             data,
             "OK"
         ));
-    } catch (error) {
-        if (error instanceof Error) {
+    } catch (err) {
+        if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                null,
-                error.message
-            ));
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
         }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            undefined,
+            "Mbuh mas"
+        ))
+    }
+}
+
+export async function fetchDosenHomepage(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    let { uid: uidUser } = req.query
+    try {
+
+        const data = await userService.homePageMobile(uidUser as string)
+
+        if (data === "user_is_not_found") {
+            res.status(404).json(createResponse(false, null, "User not found"))
+            return
+        }
+
+        res.status(200).json(createResponse(
+            true,
+            data,
+            "OK"
+        ));
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            undefined,
+            "Mbuh mas"
+        ))
+    }
+}
+
+export async function fetchUserStatistic(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    let { uid: uidUser, year } = req.query
+    try {
+
+        const data = await userService.statistic(uidUser as string, Number(year))
+
+        if (data === "user_is_not_found") {
+            res.status(404).json(createResponse(false, null, "User not found"))
+            return
+        }
+
+        res.status(200).json(createResponse(
+            true,
+            data,
+            "OK"
+        ));
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            undefined,
+            "Mbuh mas"
+        ))
     }
 }
 
@@ -55,23 +160,32 @@ export async function createUser(req: Request, res: Response) {
         return
     }
 
-    try {
-        const { nip, password, nama, role, email, profile_image: profileImage } = req.body
+    const { nip, password, nama, role, email } = req.body
+    const file = req.file as Express.Multer.File;
 
-        const data = await userService.createUser({ nip, password, nama, role, email, profileImage })
+    try {
+        const data = await userService.createUser({ nip, password, nama, role, email }, file)
         res.status(200).json(createResponse(
             true,
             data,
-            "User successfully created"
+            "OK"
         ));
-    } catch (error) {
-        if (error instanceof Error) {
+    } catch (err) {
+        if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                null,
-                error.message
-            ));
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
         }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            undefined,
+            "Mbuh mas"
+        ))
     }
 };
 
@@ -87,38 +201,47 @@ export async function updateUser(req: Request, res: Response) {
         return
     }
 
+    const { nip, password, nama, role } = req.body
+    const { uid } = req.query
+    const file = req.file as Express.Multer.File;
+
+    if (req.user!.role !== 'admin' && req.user!.userId !== uid as string) {
+        res.status(401).json(createResponse(
+            false,
+            null,
+            "You're not allowed to do this"
+        ));
+        return
+    }
+
     try {
-        const { nip, password, nama, role, profile_image: profileImage } = req.body
-        const { uid } = req.query
+        const data = await userService.updateUser(uid as string, { nip, password, nama, role, }, file)
 
-        if (req.user!.role !== 'admin' && req.user!.userId !== uid as string) {
-            res.status(401).json(createResponse(
-                false,
-                null,
-                "Method is not allowed"
-            ));
+        if (data === "user_is_not_found") {
+            res.status(404).json(createResponse(false, null, "User not found"))
+            return
         }
-
-        const data = await userService.updateUser(uid as string, {
-            nip,
-            password,
-            nama,
-            role,
-            profileImage
-        })
         res.status(200).json(createResponse(
             true,
             data,
-            "User successfully updated"
+            "OK"
         ));
-    } catch (error) {
-        if (error instanceof Error) {
+    } catch (err) {
+        if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                null,
-                error.message
-            ));
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
         }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            undefined,
+            "Mbuh mas"
+        ))
     }
 }
 
@@ -134,22 +257,35 @@ export async function deleteUser(req: Request, res: Response) {
         return
     }
 
-    try {
-        const { uid } = req.query
+    const { uid } = req.query
 
+    try {
         const data = await userService.deleteUser(uid as string)
+        if (data === "user_is_not_found") {
+            res.status(404).json(createResponse(false, null, "User not found"))
+            return
+        }
+
         res.status(200).json(createResponse(
             true,
             data,
-            "User successfully deleted"
+            "OK"
         ));
-    } catch (error) {
-        if (error instanceof Error) {
+    } catch (err) {
+        if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                null,
-                error.message
-            ));
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
         }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            undefined,
+            "Mbuh mas"
+        ))
     }
 }

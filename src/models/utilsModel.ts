@@ -3,8 +3,8 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import { dbCredentials } from "../../drizzle.config";
 
 const poolConnection = mysql.createPool(dbCredentials);
-
-export const db = drizzle({ client: poolConnection, casing: 'snake_case' });
+export const batchQuerySize = 10
+export const db = drizzle({ client: poolConnection, casing: 'snake_case', logger: true });
 
 // Example timestamp wrapper function
 export function addTimestamps(data: any, isUpdate = false) {

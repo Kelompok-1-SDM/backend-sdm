@@ -1,17 +1,30 @@
 import * as kompetensiModels from '../models/kompetensiModels'
 
-async function fetchAllKompetensi() {
-    return await fetchAllKompetensi();
+export async function fetchAllKompetensi() {
+    return await kompetensiModels.fetchAllKompentensi();
 }
 
-async function createKompetensi(data: kompetensiModels.KompetensiDataType) {
-    return await createKompetensi(data)
+export async function fetchKompetensi(uidKompetensi: string) {
+    const ap = await kompetensiModels.fetchKompetensiByUid(uidKompetensi);
+    if (!ap) return "kompetensi_is_not_found"
+
+    return ap
 }
 
-async function updateKompetensi(uidKompetensi: string, data: Partial<kompetensiModels.KompetensiDataType>) {
-    return await updateKompetensi(uidKompetensi, data)
+export async function createKompetensi(data: kompetensiModels.KompetensiDataType) {
+    return await kompetensiModels.createKompetensi(data)
 }
 
-async function deleteKompetensi(uidKompetensi: string) {
-    return await deleteKompetensi(uidKompetensi)
+export async function updateKompetensi(uidKompetensi: string, data: Partial<kompetensiModels.KompetensiDataType>) {
+    const ap = await kompetensiModels.updateKompetensi(uidKompetensi, data)
+    if (!ap) return "kompetensi_is_not_found"
+
+    return ap
+}
+
+export async function deleteKompetensi(uidKompetensi: string) {
+    const ap = await kompetensiModels.deleteKompetensi(uidKompetensi)
+    if (!ap) return "kompetensi_is_not_found"
+
+    return ap
 }

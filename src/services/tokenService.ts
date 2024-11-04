@@ -5,15 +5,12 @@ import { fetchUserForAuth } from "../models/usersModels";
 export async function login(nip: string, password: string) {
     const user = await fetchUserForAuth(nip);
 
-    if (!user) return "user_not_found";
+    if (!user) return "user_is_not_found";
 
     const wasMatch = await verify(user.password, password)
     if (!wasMatch) return "wrong_password";
 
-    const token = generateToken(user.userId, user.role!.toString());
-    const tokenExpiry = process.env.JWT_EXPIRES_IN;
+    const token = await generateToken(user.userId);
 
-    if (!tokenExpiry) throw 'Token expiration times not set'
-
-    return { token }
+    return token 
 }

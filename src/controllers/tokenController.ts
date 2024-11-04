@@ -17,31 +17,49 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     const { nip, password } = req.body;
 
-    const data: {} = await tokenService.login(nip, password);
+    try {
+        const data: string = await tokenService.login(nip, password);
 
-    switch (data) {
-        case "user_not_found":
-            res.status(404).json(createResponse(
+        switch (data) {
+            case "user_not_found":
+                res.status(404).json(createResponse(
+                    false,
+                    null,
+                    "User is not found"
+                ));
+                break;
+
+            case "wrong_password":
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "Wrong password"
+                ));
+                break;
+
+            default:
+                res.status(200).json(createResponse(
+                    true,
+                    data,
+                    "OK"
+                ));
+                break;
+        }
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
                 false,
-                null,
-                "User is not found"
-            ));
-            break;
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
 
-        case "wrong_password":
-            res.status(401).json(createResponse(
-                false,
-                null,
-                "Wrong password"
-            ));
-            break;
-
-        default:
-            res.status(200).json(createResponse(
-                true,
-                data,
-                "Successfully logged in"
-            ));
-            break;
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            undefined,
+            "Mbuh mas"
+        ))
     }
 }

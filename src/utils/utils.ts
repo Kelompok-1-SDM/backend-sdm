@@ -50,19 +50,3 @@ export const createResponse = <T = any>(
 export const hashPassword = async (password: string) => {
     return await hash(password, { hashLength: 40 })
 }
-
-export class CustomError extends Error {
-    statusCode: number;
-
-    constructor(message: string, statusCode: number) {
-        super(message); // Call the parent Error constructor with the message
-        this.statusCode = statusCode;
-
-        // Maintains proper stack trace (only works in V8 environments, like Node.js)
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, this.constructor);
-        }
-
-        this.name = this.constructor.name; // Set the error name to CustomError
-    }
-}

@@ -2,10 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { TokenError } from 'fast-jwt';
 import { verifyToken } from '../utils/jwt';
 import { createResponse } from '../utils/utils';
+import { fetchUserByUid } from '../models/usersModels';
 
 
 const authorize = (requiredRoles: ('admin' | 'manajemen' | 'dosen')[]) => {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
 
@@ -20,7 +21,10 @@ const authorize = (requiredRoles: ('admin' | 'manajemen' | 'dosen')[]) => {
 
         try {
             // Assuming verifyToken is async, use await
-            const { userId, role } = verifyToken(token);
+            const { userId } = await verifyToken(token);
+
+            const ap = await fetchUserByUid(userId)
+            const role = ap.role as 'admin' | 'manajemen' | 'dosen'
 
             // Check if the user's role matches the required roles
             if (!requiredRoles.includes(role)) {
@@ -46,13 +50,7 @@ const authorize = (requiredRoles: ('admin' | 'manajemen' | 'dosen')[]) => {
                 return
             }
 
-            // Handle other errors
-            res.status(500).json(createResponse(
-                false,
-                null,
-                `An error occurred: ${error instanceof Error ? error.message : String(error)}`
-            ));
-            return
+            throw error
         }
     };
 }
