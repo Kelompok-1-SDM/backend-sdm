@@ -3,6 +3,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { sql } from 'drizzle-orm/sql';
 import { timestampsHelper } from './helper';
 import { relations } from 'drizzle-orm';
+import { unique } from 'drizzle-orm/pg-core';
 
 export const users = mysqlTable('users', {
     userId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
@@ -58,6 +59,11 @@ export const kompetensis = mysqlTable('kompetensi', {
     ...timestampsHelper
 });
 
+export const kompetensiRelations = relations(kompetensis, ({ one }) => ({
+    kompetensiUsers: one(usersToKompetensis),
+    kompetensiKegiatans: one(kompetensisToKegiatans)
+}))
+
 export const kompetensisToKegiatans = mysqlTable('kompetensi_to_kegiatan', {
     kompetensiId: varchar({ length: 128 }).references(() => kompetensis.kompetensiId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
     kegiatanId: varchar({ length: 128 }).references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
@@ -109,6 +115,7 @@ export const kegiatanRelations = relations(kegiatans, ({ many }) => ({
     usersKegiatans: many(usersToKegiatans),
     lampiranKegiatan: many(lampiranKegiatans),
     agendaKegiatans: many(agendaKegiatans), // Fix relation name here
+    kompetensiKegiatan: many(kompetensisToKegiatans)
 }));
 
 export const usersToKegiatans = mysqlTable('users_to_kegiatan', {
@@ -149,7 +156,8 @@ export const jumlahKegiatan = mysqlTable('jumlah_kegiatan', {
 }, (table) => {
     return {
         userIdx: index('users_index').on(table.userId),
-        yearIdx: index('year_index').on(table.year)
+        yearIdx: index('year_index').on(table.year),
+        pk: primaryKey({ columns: [table.userId, table.year, table.month] })
     }
 });
 

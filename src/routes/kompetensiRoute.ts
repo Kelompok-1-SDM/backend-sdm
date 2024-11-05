@@ -25,7 +25,7 @@ router.put('/',
     body('nama_kompetensi').optional().notEmpty().withMessage("This key should not be empty"),
     ], kompetensiController.updateKompetensi)
 
-router.get('/',
+router.delete('/',
     [authorize(['admin', 'manajemen']),
     query('uid').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
     query('uid').optional().notEmpty().withMessage("This key should not be empty"),

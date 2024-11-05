@@ -46,8 +46,8 @@ export async function updateAgenda(uidAgenda: string, dataAgenda: agendaModels.A
 
 export async function updateProgressAgenda(uidProgress: string, dataProgress: agendaModels.ProgressAgendaDataType, files: Express.Multer.File[]) {
     // TODO Do notification
-    const ap = await agendaModels.fetchProgressOnly(uidProgress)
-    if (!ap.agendaId) return "progress_is_not_found"
+    const ap = await agendaModels.fetchProgress(uidProgress)
+    if (!ap!.agendaId) return "progress_is_not_found"
 
     const upload = await Promise.all(
         files.map(async (file) => await findCurrentRecord(file))

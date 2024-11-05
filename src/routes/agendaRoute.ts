@@ -8,8 +8,8 @@ const router = express.Router();
 
 router.get('/',
     [authorize(['admin', 'manajemen', 'dosen']),
-    query('uid').isString().trim().optional().toLowerCase().withMessage('This key is required and is string'),
-    query('uid').notEmpty().optional().withMessage("This key should be not empty"),
+    query('uid').isString().trim().toLowerCase().withMessage('This key is required and is string'),
+    query('uid').notEmpty().withMessage("This key should be not empty"),
     ], agendaController.fetchAgenda)
 
 router.post('/',

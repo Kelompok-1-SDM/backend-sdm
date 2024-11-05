@@ -8,7 +8,7 @@ import { faker } from '@faker-js/faker';
 import mysql from "mysql2/promise";
 import { dbCredentials } from '../../drizzle.config';
 import { exit } from 'process';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import * as xlsx from 'xlsx';
 import { hashPassword } from '../utils/utils';
@@ -90,7 +90,7 @@ const seedUsers = async () => {
 
 // Seed for 'kompetensis' table
 const seedKompetensis = async () => {
-    const kompetensiSeeds = Array.from({ length: 10 }).map(() => ({
+    const kompetensiSeeds = Array.from({ length: 30 }).map(() => ({
         namaKompetensi: `${faker.internet.emoji({ types: ['object', 'symbol'] })} ${faker.lorem.words(1)}`,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -102,7 +102,8 @@ const seedKompetensis = async () => {
 
 // Seed for 'kegiatans' table
 const seedKegiatans = async () => {
-    const kegiatanSeeds = Array.from({ length: 7 }).map(() => ({
+    // Seed 20 kegiatan records
+    const kegiatanSeeds = Array.from({ length: 20 }).map(() => ({
         judulKegiatan: faker.lorem.sentence(),
         tanggal: faker.date.past(),
         lokasi: faker.location.city(),
@@ -112,205 +113,314 @@ const seedKegiatans = async () => {
         updatedAt: new Date(),
     }));
 
-    await db.insert(kegiatans).values(kegiatanSeeds);
-    console.log(`Seeded ${kegiatanSeeds.length} kegiatans`);
+    // Insert kegiatan records and get their IDs
+    const insertedKegiatanIds = await db.insert(kegiatans).values(kegiatanSeeds).$returningId();
+
+    // Fetch all kompetensi records for random selection
+    const kompetensiRecords = await db.select().from(kompetensis);
+
+    // For each kegiatan, assign random kompetensis
+    await Promise.all(insertedKegiatanIds.map(async (kegiatanId: any) => {
+        const kompetensiCount = faker.number.int({ min: 1, max: 20 });
+        const assignedKompetensis = new Set();
+
+        while (assignedKompetensis.size < kompetensiCount) {
+            const randomKompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
+
+            if (!assignedKompetensis.has(randomKompetensiId)) {
+                await db.insert(kompetensisToKegiatans).values({
+                    kegiatanId: kegiatanId.kegiatanId,
+                    kompetensiId: randomKompetensiId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                });
+                assignedKompetensis.add(randomKompetensiId);
+            }
+        }
+    }));
+
+    console.log(`Seeded ${kegiatanSeeds.length} kegiatans with kompetensi relationships`);
 };
 
-// Seed for 'usersToKompetensis' junction table
 const seedUsersToKompetensis = async () => {
     const userRecords = await db.select().from(users);
     const kompetensiRecords = await db.select().from(kompetensis);
 
-    for (let i = 0; i < 15; i++) {
-        const userId = faker.helpers.arrayElement(userRecords).userId;
-        const kompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
+    for (const user of userRecords) {
+        // Randomize the number of kompetensis to assign to this user
+        const kompetensiCount = faker.number.int({ min: 1, max: 20 });
+        const assignedKompetensis = new Set();
 
-        // Check if the relationship already exists
-        const existingRecord = await db
-            .select()
-            .from(usersToKompetensis)
-            .where(and(
-                eq(usersToKompetensis.userId, userId),
-                eq(usersToKompetensis.kompetensiId, kompetensiId)
-            ));
+        while (assignedKompetensis.size < kompetensiCount) {
+            const randomKompetensi = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
 
-        if (existingRecord.length === 0) {
-            await db.insert(usersToKompetensis).values({
-                userId: userId,
-                kompetensiId: kompetensiId,
-            });
+            // Ensure the kompetensi isn't assigned multiple times for the same user
+            if (!assignedKompetensis.has(randomKompetensi)) {
+                const existingRecord = await db
+                    .select()
+                    .from(usersToKompetensis)
+                    .where(and(
+                        eq(usersToKompetensis.userId, user.userId),
+                        eq(usersToKompetensis.kompetensiId, randomKompetensi)
+                    ));
+
+                if (existingRecord.length === 0) {
+                    await db.insert(usersToKompetensis).values({
+                        userId: user.userId,
+                        kompetensiId: randomKompetensi,
+                    });
+                }
+
+                // Track the kompetensi assigned to avoid duplicates
+                assignedKompetensis.add(randomKompetensi);
+            }
         }
     }
     console.log(`Seeded usersToKompetensis`);
 };
+
 
 // Seed for 'usersToKegiatans' junction table
 const seedUsersToKegiatans = async () => {
     const userRecords = await db.select().from(users);
     const kegiatanRecords = await db.select().from(kegiatans);
 
-    for (let i = 0; i < 15; i++) {
-        const userId = faker.helpers.arrayElement(userRecords).userId;
-        const kegiatanId = faker.helpers.arrayElement(kegiatanRecords).kegiatanId;
+    for (const user of userRecords) {
+        // Randomize the number of kegiatans to assign to this user
+        const kegiatanCount = faker.number.int({ min: 1, max: kegiatanRecords.length });
+        const assignedKegiatans = new Set();
 
-        // Check if the relationship already exists
-        const existingRecord = await db
-            .select()
-            .from(usersToKegiatans)
-            .where(and(
-                eq(usersToKegiatans.userId, userId),
-                eq(usersToKegiatans.kegiatanId, kegiatanId)
-            ));
+        while (assignedKegiatans.size < kegiatanCount) {
+            const randomKegiatan = faker.helpers.arrayElement(kegiatanRecords);
 
-        if (existingRecord.length === 0) {
-            await db.insert(usersToKegiatans).values({
-                userId,
-                kegiatanId,
-                status: faker.helpers.arrayElement(['ditugaskan', 'selesai']),
-                roleKegiatan: faker.helpers.arrayElement(['pic', 'anggota']),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            });
+            // Ensure the kegiatan isn't assigned multiple times for the same user
+            if (!assignedKegiatans.has(randomKegiatan)) {
+                const existingRecord = await db
+                    .select()
+                    .from(usersToKegiatans)
+                    .where(and(
+                        eq(usersToKegiatans.userId, user.userId),
+                        eq(usersToKegiatans.kegiatanId, randomKegiatan.kegiatanId)
+                    ));
+
+                if (existingRecord.length === 0) {
+                    const status = faker.helpers.arrayElement(['ditugaskan', 'selesai'])
+                    await db.insert(usersToKegiatans).values({
+                        userId: user.userId,
+                        kegiatanId: randomKegiatan.kegiatanId,
+                        status: status,
+                        roleKegiatan: faker.helpers.arrayElement(['pic', 'anggota']),
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    });
+
+                    const apa = await db.select().from(kompetensisToKegiatans).where(eq(kompetensisToKegiatans.kegiatanId, randomKegiatan.kegiatanId))
+                    const newListKompetensi = apa.map((asd) => {
+                        return asd.kompetensiId
+                    })
+                    if (status == 'selesai') {
+                        for (const element of newListKompetensi) {
+                            await db.insert(usersToKompetensis).values({
+                                userId: user.userId,
+                                kompetensiId: element
+                            }).onDuplicateKeyUpdate({
+                                set: {
+                                    userId: sql`user_id`
+                                }
+                            })
+                        }
+
+                        await db.insert(jumlahKegiatan)
+                            .values({
+                                userId: user.userId,
+                                year: randomKegiatan.tanggal!.getFullYear(),
+                                month: randomKegiatan.tanggal!.getMonth(),
+                                jumlahKegiatan: 1,
+                            }).onDuplicateKeyUpdate({
+                                set: {
+                                    jumlahKegiatan: sql`${jumlahKegiatan.jumlahKegiatan} + 1`
+                                }
+                            })
+                    }
+                }
+
+                // Track the kegiatan assigned to avoid duplicates
+                assignedKegiatans.add(randomKegiatan);
+            }
         }
     }
     console.log(`Seeded usersToKegiatans`);
 };
 
+
 // Seed for 'jumlahKegiatan' table
-const seedJumlahKegiatan = async () => {
-    const userRecords = await db.select().from(users);
+// const seedJumlahKegiatan = async () => {
+//     const userRecords = await db.select().from(users);
 
-    const jumlahKegiatanSeeds = Array.from({ length: 15 }).map(() => ({
-        userId: faker.helpers.arrayElement(userRecords).userId,
-        year: faker.date.past().getFullYear(),
-        month: faker.helpers.arrayElement([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
-        jumlahKegiatan: faker.number.int({ min: 1, max: 10 }),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+//     const jumlahKegiatanSeeds = Array.from({ length: 15 }).map(() => ({
+//         userId: faker.helpers.arrayElement(userRecords).userId,
+//         year: faker.date.past().getFullYear(),
+//         month: faker.helpers.arrayElement([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+//         jumlahKegiatan: faker.number.int({ min: 1, max: 10 }),
+//         createdAt: new Date(),
+//         updatedAt: new Date(),
+//     }));
 
-    await db.insert(jumlahKegiatan).values(jumlahKegiatanSeeds);
-    console.log(`Seeded ${jumlahKegiatanSeeds.length} jumlah kegiatan entries`);
-};
+//     await db.insert(jumlahKegiatan).values(jumlahKegiatanSeeds);
+//     console.log(`Seeded ${jumlahKegiatanSeeds.length} jumlah kegiatan entries`);
+// };
 
 // Seed for 'lampiranKegiatans' table
 const seedLampiranKegiatans = async () => {
     const kegiatanRecords = await db.select().from(kegiatans);
+    const lampiranSeeds = [];
 
-    const lampiranSeeds = Array.from({ length: 10 }).map(() => ({
-        kegiatanId: faker.helpers.arrayElement(kegiatanRecords).kegiatanId,
-        nama: faker.lorem.words(2),
-        url: faker.internet.url(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+    for (const kegiatan of kegiatanRecords) {
+        // Random number of lampirans for each kegiatan
+        const lampiranCount = faker.number.int({ min: 1, max: 5 });
 
+        for (let i = 0; i < lampiranCount; i++) {
+            lampiranSeeds.push({
+                kegiatanId: kegiatan.kegiatanId,
+                nama: faker.lorem.words(2),
+                url: faker.internet.url(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+        }
+    }
+
+    // Insert all lampiran records in bulk
     await db.insert(lampiranKegiatans).values(lampiranSeeds);
     console.log(`Seeded ${lampiranSeeds.length} lampiran kegiatans`);
 };
+
 
 // Seed for 'agendaKegiatans' table
 const seedAgendaKegiatans = async () => {
     const kegiatanRecords = await db.select().from(kegiatans);
     const userRecords = await db.select().from(users);
+    const agendaSeeds = [];
 
-    const agendaSeeds = Array.from({ length: 10 }).map(() => ({
-        kegiatanId: faker.helpers.arrayElement(kegiatanRecords).kegiatanId,
-        userId: faker.helpers.arrayElement(userRecords).userId,
-        jadwalAgenda: faker.date.future(),
-        namaAgenda: faker.lorem.sentence(),
-        deskripsiAgenda: faker.lorem.paragraph(),
-        status: faker.helpers.arrayElement(['rencana', 'jalan', 'selesai']),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+    for (const kegiatan of kegiatanRecords) {
+        // Randomize the number of agendas for each kegiatan
+        const agendaCount = faker.number.int({ min: 1, max: 5 });
 
+        for (let i = 0; i < agendaCount; i++) {
+            agendaSeeds.push({
+                kegiatanId: kegiatan.kegiatanId,
+                userId: faker.helpers.arrayElement(userRecords).userId,
+                jadwalAgenda: faker.date.future(),
+                namaAgenda: faker.lorem.sentence(),
+                deskripsiAgenda: faker.lorem.paragraph(),
+                status: faker.helpers.arrayElement(['rencana', 'jalan', 'selesai']),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+        }
+    }
+
+    // Bulk insert all agenda records
     await db.insert(agendaKegiatans).values(agendaSeeds);
     console.log(`Seeded ${agendaSeeds.length} agenda kegiatans`);
 };
 
-// Seed for 'progressAgenda' table
-const seedprogressAgenda = async () => {
-    const agendaRecord = await db.select().from(agendaKegiatans);
 
-    const progressSeed = Array.from({ length: 30 }).map(() => ({
-        agendaId: faker.helpers.arrayElement(agendaRecord).agendaId,
-        deskripsiProgress: faker.lorem.paragraph(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+const seedAgendaProgressAndAttachments = async () => {
+    const agendaRecords = await db.select().from(agendaKegiatans);
+    const allProgressSeeds = [];
+    const allAttachmentSeeds = [];
+    const allProgressToAttachments = [];
 
-    await db.insert(progressAgenda).values(progressSeed);
-    console.log(`Seeded ${progressSeed.length} agenda kegiatans`);
-};
+    for (const agenda of agendaRecords) {
+        // Random number of progress entries for each agenda
+        const progressCount = faker.number.int({ min: 1, max: 5 });
+        
+        for (let i = 0; i < progressCount; i++) {
+            const progressId = faker.string.uuid(); // Use UUIDs for unique progress IDs
+            const createdAt = new Date();
+            const updatedAt = new Date();
 
-// Seed for 'progressAttachment' table
-const seedProgressAttachment = async () => {
-    const attachmentSeeds = Array.from({ length: 30 }).map(() => ({
-        hash: faker.string.uuid(),
-        url: faker.internet.url(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
-
-    await db.insert(progressAttachments).values(attachmentSeeds);
-    console.log(`Seeded ${attachmentSeeds.length} message attachments`);
-};
-
-// Seed for 'progressToAttachments' junction table
-const seedProgressToAttachments = async () => {
-    const progressRecords = await db.select().from(progressAgenda);
-    const attachmentRecords = await db.select().from(progressAttachments);
-
-    for (let i = 0; i < 30; i++) {
-        const progressId = faker.helpers.arrayElement(progressRecords).progressId;
-        const attachmentId = faker.helpers.arrayElement(attachmentRecords).attachmentId;
-
-        // Check if the relationship already exists
-        const existingRecord = await db
-            .select()
-            .from(progressAgendaToProgressAttachment)
-            .where(and(
-                eq(progressAgendaToProgressAttachment.progressId, progressId),
-            ));
-
-        if (existingRecord.length === 0) {
-            await db.insert(progressAgendaToProgressAttachment).values({
+            // Add progress entry
+            allProgressSeeds.push({
                 progressId,
-                attachmentId,
+                agendaId: agenda.agendaId,
+                deskripsiProgress: faker.lorem.paragraph(),
+                createdAt,
+                updatedAt,
             });
+
+            // Random number of attachments for each progress
+            const attachmentCount = faker.number.int({ min: 1, max: 3 });
+            const assignedAttachmentIds = new Set();
+
+            for (let j = 0; j < attachmentCount; j++) {
+                const attachmentId = faker.string.uuid(); // Unique UUID for each attachment
+
+                // Avoid duplicate attachments for this progress
+                if (!assignedAttachmentIds.has(attachmentId)) {
+                    // Add attachment entry
+                    allAttachmentSeeds.push({
+                        attachmentId,
+                        hash: attachmentId, // Assuming hash is the same as the unique ID
+                        url: faker.internet.url(),
+                        createdAt,
+                        updatedAt,
+                    });
+
+                    // Add progress-to-attachment relationship
+                    allProgressToAttachments.push({
+                        progressId,
+                        attachmentId,
+                    });
+
+                    assignedAttachmentIds.add(attachmentId);
+                }
+            }
         }
     }
-    console.log(`Seeded progressToAttachments`);
+
+    // Insert all progress entries in bulk
+    await db.insert(progressAgenda).values(allProgressSeeds);
+    console.log(`Seeded ${allProgressSeeds.length} progress records`);
+
+    // Insert all attachments in bulk
+    await db.insert(progressAttachments).values(allAttachmentSeeds);
+    console.log(`Seeded ${allAttachmentSeeds.length} attachment records`);
+
+    // Insert all progress-to-attachment relationships in bulk
+    await db.insert(progressAgendaToProgressAttachment).values(allProgressToAttachments);
+    console.log(`Seeded ${allProgressToAttachments.length} progress-to-attachment relationships`);
 };
 
-// Seed for 'kompetensiToKegiatans' junction table
-const seedKompetensiToKegiatans = async () => {
-    const kompetensiRecords = await db.select().from(kompetensis);
-    const kegiatanRecords = await db.select().from(kegiatans);
 
-    for (let i = 0; i < 15; i++) {
-        const kompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
-        const kegiatanId = faker.helpers.arrayElement(kegiatanRecords).kegiatanId;
+// // Seed for 'kompetensiToKegiatans' junction table
+// const seedKompetensiToKegiatans = async () => {
+//     const kompetensiRecords = await db.select().from(kompetensis);
+//     const kegiatanRecords = await db.select().from(kegiatans);
 
-        // Check if the relationship already exists
-        const existingRecord = await db
-            .select()
-            .from(kompetensisToKegiatans)
-            .where(and(
-                eq(kompetensisToKegiatans.kompetensiId, kompetensiId),
-                eq(kompetensisToKegiatans.kegiatanId, kegiatanId)
-            ));
+//     for (let i = 0; i < 15; i++) {
+//         const kompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
+//         const kegiatanId = faker.helpers.arrayElement(kegiatanRecords).kegiatanId;
 
-        if (existingRecord.length === 0) {
-            await db.insert(kompetensisToKegiatans).values({
-                kompetensiId,
-                kegiatanId,
-            });
-        }
-    }
-    console.log(`Seeded kompetensiToKegiatans`);
-};
+//         // Check if the relationship already exists
+//         const existingRecord = await db
+//             .select()
+//             .from(kompetensisToKegiatans)
+//             .where(and(
+//                 eq(kompetensisToKegiatans.kompetensiId, kompetensiId),
+//                 eq(kompetensisToKegiatans.kegiatanId, kegiatanId)
+//             ));
+
+//         if (existingRecord.length === 0) {
+//             await db.insert(kompetensisToKegiatans).values({
+//                 kompetensiId,
+//                 kegiatanId,
+//             });
+//         }
+//     }
+//     console.log(`Seeded kompetensiToKegiatans`);
+// };
 
 
 // Main function to run all seeders
@@ -318,15 +428,11 @@ const runSeeds = async () => {
     await seedUsers();
     await seedKompetensis();
     await seedKegiatans();
-    await seedJumlahKegiatan();
     await seedLampiranKegiatans();
     await seedAgendaKegiatans();
-    await seedprogressAgenda();
-    await seedProgressAttachment();
-    await seedKompetensiToKegiatans();
     await seedUsersToKompetensis();
     await seedUsersToKegiatans();
-    await seedProgressToAttachments();
+    await seedAgendaProgressAndAttachments()
     console.log('All seed data inserted');
     exit()
 };

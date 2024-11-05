@@ -9,7 +9,7 @@ export async function homePageMobile(uidUser: string) {
     if (!temp) return "user_is_not_found"
 
     const jumlahBulanSkrg = await kegiatanModels.fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser, new Date().getMonth() + 1)
-    const duaTugasTerbaru = await kegiatanModels.fetchKegiatanByUser(uidUser, undefined, true)
+    const duaTugasTerbaru = await kegiatanModels.fetchKegiatanByUser(uidUser, "ditugaskan", true)
     const tugasBerlangsung = await kegiatanModels.fetchUserCurrentKegiatan(uidUser, new Date())
     const stats = await statistic(uidUser)
 
@@ -55,6 +55,10 @@ export async function createUser(data: UserDataType, file?: Express.Multer.File)
     return await usersModels.createUser(data)
 }
 
+export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]) {
+    return usersModels.addUserKompetensi(uidUser, uidKompetensi)
+}
+
 export async function updateUser(uidUser: string, data: Partial<usersModels.UserDataType>, file?: Express.Multer.File) {
     const temp = await usersModels.fetchUserByUid(uidUser)
     if (!temp) return "user_is_not_found"
@@ -76,3 +80,17 @@ export async function deleteUser(uidUser: string) {
 
     return res
 }
+
+export async function deleteUserKompetensi(uidUser: string, uidKompetensi: string[]) {
+    const temp = await usersModels.fetchUserByUid(uidUser)
+    if (!temp) return "user_is_not_found"
+
+    return await usersModels.deleteUserKompetensi(uidUser, uidKompetensi)
+}
+
+// export async function deleteUserJumlahKegiatan(uidUser: string, year: number, month: number) {
+//     const temp = await usersModels.fetchUserByUid(uidUser)
+//     if (!temp) return "user_is_not_found"
+
+//     return await usersModels.deleteJumlahKegiatan(uidUser, year, month)
+// }

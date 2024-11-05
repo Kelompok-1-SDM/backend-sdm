@@ -1,5 +1,5 @@
 import { and, desc, eq, getTableColumns, sql, count } from "drizzle-orm";
-import { agendaKegiatans, jumlahKegiatan, kegiatans, kompetensis, kompetensisToKegiatans, lampiranKegiatans, users, usersToKegiatans } from "../db/schema";
+import { agendaKegiatans, kegiatans, kompetensis, kompetensisToKegiatans, lampiranKegiatans, users, usersToKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 import { userTableColumns } from "./usersModels";
 import { userToKegiatanColumns } from "./penugasanModels";
@@ -9,22 +9,43 @@ export type KegiatanDataType = typeof kegiatans.$inferInsert
 export const kegiatansColumns = getTableColumns(kegiatans)
 
 export async function fetchAllKegiatan() {
-    return await db.select().from(kegiatans)
+    return await db.query.kegiatans.findMany()
 }
 
 export async function fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser: string, month?: number) {
-    const [jumlahKeg] = await db.select({ count: count(usersToKegiatans.kegiatanId) })
+    const prepared = db.select({ count: count(usersToKegiatans.kegiatanId) })
         .from(usersToKegiatans)
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
         .where(and(
-            eq(usersToKegiatans.userId, uidUser),
+            eq(usersToKegiatans.userId, sql.placeholder('uidUser')),
             eq(usersToKegiatans.status, "ditugaskan"),
             month ? sql`MONTH(${kegiatans.tanggal}) = ${month}` : undefined
-        ))
+        )).prepare()
 
-    return jumlahKeg.count
+    const [res] = await prepared.execute({ uidUser })
+    return res.count
 }
 
+export async function fetchKompetensiKegiatan(uidKegiatan: string) {
+    const prepared = db.query.kegiatans.findFirst({
+        where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
+        with: {
+            kompetensiKegiatan: true
+        }
+    }).prepare()
+
+    const res = await prepared.execute({ uidKegiatan })
+    const temp = res?.kompetensiKegiatan.map((dat) => {
+        return dat.kompetensiId
+    })
+    return {
+        ...res,
+        kompetensi: res!.kompetensiKegiatan.map((dat) => {
+            return dat.kompetensiId
+        }),
+        kompetensiKegiatan: undefined
+    }
+}
 
 export async function fetchKegiatanByUser(uidUser: string, status?: 'ditugaskan' | 'selesai', wasLimitedTwo: boolean = false) {
     const [datUser] = await db.select(userTableColumns).from(users).where(eq(users.userId, uidUser));
@@ -57,7 +78,6 @@ export async function fetchKegiatanByUser(uidUser: string, status?: 'ditugaskan'
         kegiatan: kg
     };
 }
-
 
 export async function fetchUserCurrentKegiatan(uidUser: string, datetime: Date) {
     const [kg] = await db.select({ ...kegiatansColumns, status: usersToKegiatans.status, role: usersToKegiatans.roleKegiatan }).from(usersToKegiatans)

@@ -22,6 +22,7 @@ const authorize = (requiredRoles: ('admin' | 'manajemen' | 'dosen')[]) => {
         try {
             // Assuming verifyToken is async, use await
             const { userId } = await verifyToken(token);
+            console.log(userId)
 
             const ap = await fetchUserByUid(userId)
             const role = ap.role as 'admin' | 'manajemen' | 'dosen'
@@ -48,9 +49,20 @@ const authorize = (requiredRoles: ('admin' | 'manajemen' | 'dosen')[]) => {
                     "Access Token is expired, please login again"
                 ));
                 return
+            } else if (error instanceof Error) {
+                res.status(500).json(createResponse(
+                    false,
+                    process.env.NODE_ENV === 'development' ? error.stack : undefined,
+                    error.message || 'An unknown error occurred!'
+                ))
+                return
             }
-
-            throw error
+            console.log(error)
+            res.status(500).json(createResponse(
+                false,
+                undefined,
+                "Mbuh mas"
+            ))
         }
     };
 }

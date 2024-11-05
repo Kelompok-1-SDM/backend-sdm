@@ -6,20 +6,6 @@ import { kegiatansColumns } from "./kegiatanModels";
 
 export const userToKegiatanColumns = getTableColumns(usersToKegiatans)
 
-// export async function fetchAllPenugasanByUser(uidUser: string, status?: 'ditugaskan' | 'selesai', role?: 'pic' | 'anggota') {
-//     const temp = await db.select({ ...kegiatansColumns, penugasan: { ...userToKegiatanColumns } }).from(usersToKegiatans)
-//         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
-//         .where(
-//             and(
-//                 eq(usersToKegiatans.userId, uidUser),
-//                 role ? eq(usersToKegiatans.roleKegiatan, role) : undefined,
-//                 status ? eq(usersToKegiatans.status, status) : undefined
-//             )
-//         )
-//         .orderBy(desc(kegiatans.tanggal))
-
-//     return temp
-// }
 
 export async function fetchUserRoleInKegiatan(uideKegiatan: string, uidUser: string) {
     const [temp] = await db.select({ role: usersToKegiatans.roleKegiatan }).from(usersToKegiatans).where(and(eq(usersToKegiatans.kegiatanId, uideKegiatan), eq(usersToKegiatans.userId, uidUser)))

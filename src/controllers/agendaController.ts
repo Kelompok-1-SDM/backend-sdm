@@ -67,7 +67,7 @@ export async function createAgenda(req: Request, res: Response) {
     const { uid: uidKegiatan } = req.query
     const { uid_user: userUid, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
 
-    if (req.user.role === 'dosen') {
+    if (req.user?.role === 'dosen') {
         const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(
@@ -203,7 +203,7 @@ export async function updateAgenda(req: Request, res: Response) {
     const { uid: uidAgenda } = req.query
     const { uid_user: userUid, kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
 
-    if (req.user.role === 'dosen') {
+    if (req.user?.role === 'dosen') {
         const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(

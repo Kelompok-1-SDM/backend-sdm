@@ -16,13 +16,13 @@ router.get('/',
 
 router.get('/homepage-mobile',
     [authorize(['admin', 'manajemen', 'dosen']),
-    query('uid').isString().trim().toLowerCase().withMessage("This key is optional and it's string"),
+    query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
     ], userController.fetchDosenHomepage)
 
 router.get('/statistic',
     [authorize(['admin', 'manajemen', 'dosen']),
-    query('uid').isString().trim().toLowerCase().withMessage("This key is optional and it's string"),
+    query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
     query('year').isNumeric().optional().trim().toLowerCase().withMessage("This key is optional and it's numeric"),
     query('year').optional().notEmpty().withMessage("This key should not be empty"),
@@ -42,6 +42,16 @@ router.post('/', [
     body('email').isEmail().trim().withMessage("This key is required and it's email"),
     body('email').notEmpty().withMessage("This key should not be empty")
 ], userController.createUser);
+
+router.post('/kompetensi', [
+    authorize(['admin']),
+    query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
+    query('uid').notEmpty().withMessage("This key should not be empty"),
+    body('list_kompetensi').isArray().withMessage('List kompetensi must be an array'),
+    body('list_kompetensi').notEmpty().withMessage("This key should not be empty"),
+    body('list_kompetensi.*').isString().trim().withMessage('List kompetensi(element) must be an string'),
+    body('list_kompetensi.*').notEmpty().withMessage("This key should not be empty")
+], userController.addUserKompetensi);
 
 router.put('/', [
     authorize(['admin', 'manajemen', 'dosen']),
@@ -67,5 +77,16 @@ router.delete('/',
     ],
     userController.deleteUser
 )
+
+router.delete('/kompetensi', [
+    authorize(['admin']),
+    query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
+    query('uid').notEmpty().withMessage("This key should not be empty"),
+    body('list_kompetensi').isArray().optional().withMessage('List kompetensi must be an array'),
+    body('list_kompetensi').optional().notEmpty().withMessage("This key should not be empty"),
+    body('list_kompetensi.*').isString().trim().withMessage('List kompetensi(element) must be an string'),
+    body('list_kompetensi.*').notEmpty().withMessage("This key should not be empty")
+], userController.deleteUserKompetensi);
+
 
 export default router;

@@ -6,11 +6,6 @@ export type LampiranDataType = typeof lampiranKegiatans.$inferInsert
 export const lampiranColumns = getTableColumns(lampiranKegiatans)
 
 
-// export async function fetchLampiranByKegiatan(uidKegiatan: string) {
-//     const temp = await db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.kegiatanId, uidKegiatan))
-//     return temp
-// }
-
 export async function fetchLampiranByUid(uidLampiran: string) {
     const [temp] = await db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
     return temp

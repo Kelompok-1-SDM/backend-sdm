@@ -41,6 +41,7 @@ export async function fetchUserStatistic(uidUser: string, year: number) {
     }
 
     return {
+        ...dataUser,
         totalDalamSetahun,
         jumlahKegiatan: dataJumlahKegiatan
     }
@@ -70,7 +71,6 @@ export async function createUser(data: UserDataType) {
     }
 }
 
-// TODO DO it noww bitch
 export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]) {
 
     let data: UsersToKompetensiDataType[]
@@ -83,7 +83,7 @@ export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]
 
     await db.insert(usersToKompetensis).values(data!).onDuplicateKeyUpdate({
         set: {
-            userId: sql`user_id`,
+            userId: sql`values(${usersToKompetensis.userId})`,
         }
     })
 
@@ -95,7 +95,7 @@ export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]
     }
 }
 
-// TODO DO it noww bitch
+// Internal only
 export async function addJumlahKegiatan(uidUser: string, wasDecrement: boolean = false, year: number, month: number) {
     await db.insert(jumlahKegiatan)
         .values(addTimestamps({
@@ -123,30 +123,6 @@ export async function updateUser(uidUser: string, data: Partial<UserDataType>) {
     return res
 }
 
-// TODO DO it noww bitch
-export async function updateKompetensiUser(uidUser: string, uidKompetensi: string[]) {
-
-    let data: UsersToKompetensiDataType[]
-    for (const uid of uidKompetensi) {
-        data!.push(addTimestamps({
-            userId: uidUser,
-            kompetensiId: uid
-        }, true))
-    }
-    await db.insert(usersToKompetensis).values(data!).onDuplicateKeyUpdate({
-        set: addTimestamps({
-            userId: sql`user_id`
-        }, true)
-    })
-
-    const kompe = db.select(kompetensisColumns).from(usersToKompetensis).innerJoin(kompetensis, eq(kompetensis.kompetensiId, usersToKompetensis.kompetensiId)).where(eq(usersToKompetensis.userId, uidUser))
-    const user = await fetchUserByUid(uidUser)
-    return {
-        ...user,
-        kompetensi: kompe
-    }
-}
-
 export async function deleteUser(uidUser: string) {
     const user = await fetchUserByUid(uidUser)
     await db.delete(users).where(eq(users.userId, uidUser))
@@ -154,7 +130,6 @@ export async function deleteUser(uidUser: string) {
     return user
 }
 
-// TODO DO it noww bitch
 export async function deleteUserKompetensi(uidUser: string, uidKompetensi: string[]) {
     await db.transaction(async (tx) => {
         for (const uidK of uidKompetensi) {
@@ -171,15 +146,14 @@ export async function deleteUserKompetensi(uidUser: string, uidKompetensi: strin
     }
 }
 
-// TODO DO it noww bitch
-export async function deleteJumlahKegiatan(uidUser: string, year: number, month: number) {
-    await db.delete(jumlahKegiatan)
-        .where(and(eq(jumlahKegiatan.userId, uidUser), eq(jumlahKegiatan.year, year), eq(jumlahKegiatan.month, month)))
+// export async function deleteJumlahKegiatan(uidUser: string, year: number, month: number) {
+//     await db.delete(jumlahKegiatan)
+//         .where(and(eq(jumlahKegiatan.userId, uidUser), eq(jumlahKegiatan.year, year), eq(jumlahKegiatan.month, month)))
 
-    const jmlhKgh = await db.select().from(jumlahKegiatan).where(eq(jumlahKegiatan.userId, uidUser))
-    const user = await fetchUserByUid(uidUser)
-    return {
-        ...user,
-        jumlahKegiatan: jmlhKgh
-    }
-}
+//     const jmlhKgh = await db.select().from(jumlahKegiatan).where(eq(jumlahKegiatan.userId, uidUser))
+//     const user = await fetchUserByUid(uidUser)
+//     return {
+//         ...user,
+//         jumlahKegiatan: jmlhKgh
+//     }
+// }

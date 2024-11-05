@@ -29,7 +29,7 @@ export async function createLampiran(req: Request, res: Response) {
         return
     }
 
-    if (req.user.role === 'dosen') {
+    if (req.user?.role === 'dosen') {
         const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(
@@ -99,7 +99,7 @@ export async function deleteLampiran(req: Request, res: Response) {
 
     const { uid: uidLampiran } = req.query
 
-    if (req.user.role === 'dosen') {
+    if (req.user?.role === 'dosen') {
         const lampiran = await fetchLampiranByUid(uidLampiran as string)
         const wasAllowed = await fetchUserRoleInKegiatan(lampiran.kegiatanId as string, req.user!.userId as string)
         if (!wasAllowed) {
