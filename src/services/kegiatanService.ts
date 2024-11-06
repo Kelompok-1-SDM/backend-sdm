@@ -1,4 +1,6 @@
 import * as kegiatanModels from '../models/kegiatanModels'
+import { ChatRoom, Message } from '../models/livechatModels'
+import { addTimestamps } from '../models/utilsModel'
 
 export async function fetchAllKegiatan() {
     return await kegiatanModels.fetchAllKegiatan()
@@ -21,7 +23,14 @@ export async function fetchKegiatan(uidKegiatan: string) {
 
 export async function createKegiatan(kegiatanData: kegiatanModels.KegiatanDataType, listKompetensiUid: string[]) {
 
-    return await kegiatanModels.createKegiatan(kegiatanData, listKompetensiUid)
+    const keg = await kegiatanModels.createKegiatan(kegiatanData, listKompetensiUid)
+
+    const chtRoom = new ChatRoom(addTimestamps({
+        roomId: keg.kegiatanId,
+    }))
+    await chtRoom.save()
+
+    return keg
 }
 
 export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<kegiatanModels.KegiatanDataType>, listKompetensiUid: string[]) {
@@ -34,6 +43,9 @@ export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<
 export async function deleteKegiatan(uidKegiatan: string) {
     const ap = await kegiatanModels.deleteKegiatan(uidKegiatan)
     if (!ap) return "kegiatan_is_not_found"
+
+    await ChatRoom.findByIdAndDelete(uidKegiatan)
+    await Message.deleteMany({ roomId: uidKegiatan })
 
     return ap
 }

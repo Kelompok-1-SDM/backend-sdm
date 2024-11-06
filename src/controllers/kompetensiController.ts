@@ -39,7 +39,7 @@ export async function fetchKompetensi(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -48,7 +48,7 @@ export async function fetchKompetensi(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -80,14 +80,14 @@ export async function createKompetensi(req: Request, res: Response) {
             if (err.message.toLowerCase().includes('duplicate')) {
                 res.status(422).json(createResponse(
                     false,
-                    undefined,
+                    null,
                     "Kompetensi is duplicated"
                 ))
                 return
             } else {
                 res.status(500).json(createResponse(
                     false,
-                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    process.env.NODE_ENV === 'development' ? err.stack : null,
                     err.message || 'An unknown error occurred!'
                 ))
                 return
@@ -97,7 +97,7 @@ export async function createKompetensi(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -135,7 +135,7 @@ export async function updateKompetensi(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -144,7 +144,7 @@ export async function updateKompetensi(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -181,7 +181,7 @@ export async function deleteUser(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -190,7 +190,7 @@ export async function deleteUser(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }

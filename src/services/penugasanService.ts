@@ -3,10 +3,21 @@ import * as penugasanModels from '../models/penugasanModels'
 import * as kegiatanModels from '../models/kegiatanModels'
 import * as usersModels from '../models/usersModels'
 import { fetchUserByUid } from '../models/usersModels'
+import { ChatRoom } from '../models/livechatModels'
 
 export async function tugaskanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid_user: string, role: 'pic' | 'anggota' }[]) {
     // TODO Do notification
-    return await penugasanModels.createPenugasan(uidKegiatan, listUserDitugaskan)
+    const penugasan = await penugasanModels.createPenugasan(uidKegiatan, listUserDitugaskan)
+
+    const cht = await ChatRoom.findOne({ roomId: uidKegiatan })
+    await Promise.all(listUserDitugaskan.map(async (asp) => {
+        if (cht && !cht.assignedUsers?.includes(asp.uid_user)) {
+            cht.assignedUsers!.push(asp.uid_user)
+        }
+    }))
+    await cht?.save()
+
+    return penugasan
 }
 
 export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid_user: string, role: 'pic' | 'anggota', status: 'ditugaskan' | 'selesai' }[]) {
@@ -18,8 +29,6 @@ export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitug
         if (ap.status === 'selesai') {
             await usersModels.addUserKompetensi(ap.uid_user, kegKomp.kompetensi)
             await usersModels.addJumlahKegiatan(ap.uid_user, undefined, kegKomp.tanggal!.getFullYear(), kegKomp.tanggal!.getMonth() + 1)
-        } else if (ap.status === 'ditugaskan') {
-            await usersModels.addJumlahKegiatan(ap.uid_user, true, kegKomp.tanggal!.getFullYear(), kegKomp.tanggal!.getMonth() + 1)
         }
     }))
 
@@ -27,6 +36,7 @@ export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitug
 }
 
 export async function deletePenugasan(uidKegiatan: string, uidUser: string) {
+    // TODO fix logic here
     const ap = await fetchKegiatanByUid(uidKegiatan)
     if (!ap) return "kegiatan_is_not_found"
 

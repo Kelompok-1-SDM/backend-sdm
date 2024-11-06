@@ -9,7 +9,7 @@ export async function fetchAgenda(req: Request, res: Response) {
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
             false,
-            undefined,
+            null,
             "Input error",
             errors.array()
         ));
@@ -22,7 +22,7 @@ export async function fetchAgenda(req: Request, res: Response) {
         const data = await agendaServices.fetchAgenda(uidAgenda as string)
 
         if (data === "agenda_is_not_found") {
-            res.status(404).json(createResponse(false, undefined, "Agenda not found"))
+            res.status(404).json(createResponse(false, null, "Agenda not found"))
             return
         } else {
             res.status(200).json(createResponse(
@@ -36,7 +36,7 @@ export async function fetchAgenda(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -45,7 +45,7 @@ export async function fetchAgenda(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -57,7 +57,7 @@ export async function createAgenda(req: Request, res: Response) {
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
             false,
-            undefined,
+            null,
             "Input error",
             errors.array()
         ));
@@ -72,7 +72,7 @@ export async function createAgenda(req: Request, res: Response) {
         if (!wasAllowed) {
             res.status(401).json(createResponse(
                 false,
-                undefined,
+                null,
                 "You're not allowed to do this"
             ));
             return
@@ -81,7 +81,7 @@ export async function createAgenda(req: Request, res: Response) {
         if (wasAllowed.role == 'anggota') {
             res.status(401).json(createResponse(
                 false,
-                undefined,
+                null,
                 "You're not PIC, or higher role"
             ));
             return
@@ -100,21 +100,21 @@ export async function createAgenda(req: Request, res: Response) {
             if (err.message.toLowerCase().includes('references `kegiatan`')) {
                 res.status(404).json(createResponse(
                     false,
-                    undefined,
+                    null,
                     "Kegiatan uid was not found, bad relationship"
                 ))
                 return
             } else if (err.message.toLowerCase().includes('references `users`')) {
                 res.status(404).json(createResponse(
                     false,
-                    undefined,
+                    null,
                     "User uid was not found, bad relationship"
                 ))
                 return
             } else {
                 res.status(500).json(createResponse(
                     false,
-                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    process.env.NODE_ENV === 'development' ? err.stack : null,
                     err.message || 'An unknown error occurred!'
                 ))
                 return
@@ -123,7 +123,7 @@ export async function createAgenda(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -134,7 +134,7 @@ export async function createProgressAgenda(req: Request, res: Response) {
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
             false,
-            undefined,
+            null,
             "Input error",
             errors.array()
         ));
@@ -148,7 +148,7 @@ export async function createProgressAgenda(req: Request, res: Response) {
         if (!files || files.length === 0) {
             res.status(400).json(createResponse(
                 false,
-                undefined,
+                null,
                 "Key files is missing or not uploaded(minimum 1, maximum 10)"
             ));
             return
@@ -165,14 +165,14 @@ export async function createProgressAgenda(req: Request, res: Response) {
             if (err.message.toLowerCase().includes('references `agenda`')) {
                 res.status(404).json(createResponse(
                     false,
-                    undefined,
+                    null,
                     "Agenda uid was not found, bad relationship"
                 ))
                 return
             } else {
                 res.status(500).json(createResponse(
                     false,
-                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    process.env.NODE_ENV === 'development' ? err.stack : null,
                     err.message || 'An unknown error occurred!'
                 ))
                 return
@@ -182,7 +182,7 @@ export async function createProgressAgenda(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -193,7 +193,7 @@ export async function updateAgenda(req: Request, res: Response) {
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
             false,
-            undefined,
+            null,
             "Input error",
             errors.array()
         ));
@@ -208,7 +208,7 @@ export async function updateAgenda(req: Request, res: Response) {
         if (!wasAllowed) {
             res.status(401).json(createResponse(
                 false,
-                undefined,
+                null,
                 "You're not allowed to do this"
             ));
             return
@@ -217,7 +217,7 @@ export async function updateAgenda(req: Request, res: Response) {
         if (wasAllowed.role == 'anggota') {
             res.status(401).json(createResponse(
                 false,
-                undefined,
+                null,
                 "You're not PIC, or higher role"
             ));
             return
@@ -236,21 +236,21 @@ export async function updateAgenda(req: Request, res: Response) {
             if (err.message.toLowerCase().includes('references `kegiatan`')) {
                 res.status(404).json(createResponse(
                     false,
-                    undefined,
+                    null,
                     "Kegiatan uid was not found, bad relationship"
                 ))
                 return
             } else if (err.message.toLowerCase().includes('references `users`')) {
                 res.status(404).json(createResponse(
                     false,
-                    undefined,
+                    null,
                     "User uid was not found, bad relationship"
                 ))
                 return
             } else {
                 res.status(500).json(createResponse(
                     false,
-                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    process.env.NODE_ENV === 'development' ? err.stack : null,
                     err.message || 'An unknown error occurred!'
                 ))
                 return
@@ -260,7 +260,7 @@ export async function updateAgenda(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -271,7 +271,7 @@ export async function updateProgressAgenda(req: Request, res: Response) {
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
             false,
-            undefined,
+            null,
             "Input error",
             errors.array()
         ));
@@ -294,14 +294,14 @@ export async function updateProgressAgenda(req: Request, res: Response) {
             if (err.message.toLowerCase().includes('references `agenda`')) {
                 res.status(404).json(createResponse(
                     false,
-                    undefined,
+                    null,
                     "Agenda uid was not found, bad relationship"
                 ))
                 return
             } else {
                 res.status(500).json(createResponse(
                     false,
-                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    process.env.NODE_ENV === 'development' ? err.stack : null,
                     err.message || 'An unknown error occurred!'
                 ))
                 return
@@ -311,7 +311,7 @@ export async function updateProgressAgenda(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -322,7 +322,7 @@ export async function deleteAgenda(req: Request, res: Response) {
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
             false,
-            undefined,
+            null,
             "Input error",
             errors.array()
         ));
@@ -335,7 +335,7 @@ export async function deleteAgenda(req: Request, res: Response) {
         const data = await agendaServices.deleteAgenda(uidAgenda as string)
 
         if (data === "agenda_is_not_found") {
-            res.status(404).json(createResponse(false, undefined, "Agenda not found"))
+            res.status(404).json(createResponse(false, null, "Agenda not found"))
             return
         }
 
@@ -348,7 +348,7 @@ export async function deleteAgenda(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -357,7 +357,7 @@ export async function deleteAgenda(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -369,7 +369,7 @@ export async function deleteProgressAgenda(req: Request, res: Response) {
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
             false,
-            undefined,
+            null,
             "Input error",
             errors.array()
         ));
@@ -382,7 +382,7 @@ export async function deleteProgressAgenda(req: Request, res: Response) {
         const data = await agendaServices.deleteProgress(uidProgress as string)
 
         if (data === "progress_is_not_found") {
-            res.status(404).json(createResponse(false, undefined, "Progress not found"))
+            res.status(404).json(createResponse(false, null, "Progress not found"))
             return
         }
 
@@ -395,7 +395,7 @@ export async function deleteProgressAgenda(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -404,7 +404,7 @@ export async function deleteProgressAgenda(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }

@@ -69,7 +69,7 @@ export async function createLampiran(req: Request, res: Response) {
             } else {
                 res.status(500).json(createResponse(
                     false,
-                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    process.env.NODE_ENV === 'development' ? err.stack : null,
                     err.message || 'An unknown error occurred!'
                 ))
                 return
@@ -79,7 +79,7 @@ export async function createLampiran(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -138,7 +138,7 @@ export async function deleteLampiran(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -147,7 +147,7 @@ export async function deleteLampiran(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }

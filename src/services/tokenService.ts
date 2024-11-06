@@ -12,5 +12,5 @@ export async function login(nip: string, password: string) {
 
     const token = await generateToken(user.userId);
 
-    return token 
+    return { token }
 }

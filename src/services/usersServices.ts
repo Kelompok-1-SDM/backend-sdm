@@ -14,7 +14,7 @@ export async function homePageMobile(uidUser: string) {
     const stats = await statistic(uidUser)
 
     return {
-        jumlahTugas: jumlahBulanSkrg,
+        jumlahTugasBulanSekarang: jumlahBulanSkrg,
         duaTugasTerbaru: duaTugasTerbaru.kegiatan,
         tugasBerlangsung,
         statistik: stats
@@ -36,8 +36,8 @@ export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
     return await usersModels.fetchUserByRole(role)
 }
 
-export async function fetchUser(uid: string) {
-    const res = await usersModels.fetchUserComplete(uid)
+export async function fetchUser(uid?: string, nip?: string) {
+    const res = await usersModels.fetchUserComplete(uid, nip)
     if (!res) return "user_is_not_found"
 
     return res
@@ -86,11 +86,4 @@ export async function deleteUserKompetensi(uidUser: string, uidKompetensi: strin
     if (!temp) return "user_is_not_found"
 
     return await usersModels.deleteUserKompetensi(uidUser, uidKompetensi)
-}
-
-// export async function deleteUserJumlahKegiatan(uidUser: string, year: number, month: number) {
-//     const temp = await usersModels.fetchUserByUid(uidUser)
-//     if (!temp) return "user_is_not_found"
-
-//     return await usersModels.deleteJumlahKegiatan(uidUser, year, month)
-// }
+}   

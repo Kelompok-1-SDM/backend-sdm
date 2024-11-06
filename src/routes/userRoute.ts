@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, query } from 'express-validator';
 import * as userController from '../controllers/userController';
-import authorize from '../middlewares/authorizations';
+import { authorize } from '../middlewares/authorizations';
 import { handleFileUpload } from '../middlewares/uploadFiles';
 
 const router = express.Router();
@@ -10,6 +10,8 @@ router.get('/',
     [authorize(['admin', 'manajemen', 'dosen']),
     query('uid').isString().optional().trim().toLowerCase().withMessage("This key is optional and it's string"),
     query('uid').optional().notEmpty().withMessage("This key should not be empty"),
+    query('nip').isString().optional().trim().toLowerCase().withMessage("This key is optional and it's string"),
+    query('nip').optional().notEmpty().withMessage("This key should not be empty"),
     query('role').isString().optional().isIn(['admin', 'manajemen', 'dosen']).toLowerCase().trim().withMessage('Role are "admin", "manajemen", "dosen"'),
     query('role').optional().notEmpty().withMessage('This key should not be empty. Role are "admin", "manajemen", "dosen"'),
     ], userController.fetchUsers)

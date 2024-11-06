@@ -12,6 +12,8 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import * as xlsx from 'xlsx';
 import { hashPassword } from '../utils/utils';
+import mongoose from 'mongoose';
+import { ChatRoom } from '../models/livechatModels';
 
 const poolConnection = mysql.createPool(dbCredentials);
 
@@ -121,6 +123,13 @@ const seedKegiatans = async () => {
 
     // For each kegiatan, assign random kompetensis
     await Promise.all(insertedKegiatanIds.map(async (kegiatanId: any) => {
+        const apa = new ChatRoom({
+            roomId: kegiatanId.kegiatanId, // Using activityId as roomId
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        })
+        await apa.save()
+
         const kompetensiCount = faker.number.int({ min: 1, max: 20 });
         const assignedKompetensis = new Set();
 
@@ -213,6 +222,13 @@ const seedUsersToKegiatans = async () => {
                         createdAt: new Date(),
                         updatedAt: new Date(),
                     });
+
+                     // Add user to the ChatRoom if not already added
+                     const chatRoom = await ChatRoom.findOne({ roomId: randomKegiatan.kegiatanId });
+                     if (chatRoom && !chatRoom.assignedUsers?.includes(user.userId)) {
+                         chatRoom.assignedUsers!.push(user.userId);
+                         await chatRoom.save();
+                     }
 
                     const apa = await db.select().from(kompetensisToKegiatans).where(eq(kompetensisToKegiatans.kegiatanId, randomKegiatan.kegiatanId))
                     const newListKompetensi = apa.map((asd) => {
@@ -335,7 +351,7 @@ const seedAgendaProgressAndAttachments = async () => {
     for (const agenda of agendaRecords) {
         // Random number of progress entries for each agenda
         const progressCount = faker.number.int({ min: 1, max: 5 });
-        
+
         for (let i = 0; i < progressCount; i++) {
             const progressId = faker.string.uuid(); // Use UUIDs for unique progress IDs
             const createdAt = new Date();
@@ -425,6 +441,15 @@ const seedAgendaProgressAndAttachments = async () => {
 
 // Main function to run all seeders
 const runSeeds = async () => {
+    mongoose.connect(process.env.MONGODB_URI!
+        // {
+        //     useNewUrlParser: true,
+        //     useUnifiedTopology: true,
+        // } as mongoose.ConnectOptions
+    )
+        .then(() => console.log('MongoDB connected'))
+        .catch((err) => console.log(err));
+
     await seedUsers();
     await seedKompetensis();
     await seedKegiatans();

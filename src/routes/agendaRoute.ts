@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, query } from 'express-validator';
 import * as agendaController from '../controllers/agendaController';
-import authorize from '../middlewares/authorizations';
+import { authorize } from '../middlewares/authorizations';
 import { handleFileUploadArray } from '../middlewares/uploadFiles';
 
 const router = express.Router();

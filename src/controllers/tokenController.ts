@@ -18,7 +18,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     const { nip, password } = req.body;
 
     try {
-        const data: string = await tokenService.login(nip, password);
+        const data: any = await tokenService.login(nip, password);
 
         switch (data) {
             case "user_not_found":
@@ -49,7 +49,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -58,7 +58,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }

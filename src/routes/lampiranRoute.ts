@@ -1,7 +1,7 @@
 import express from 'express';
 import { query } from 'express-validator';
 import * as lampiranController from '../controllers/lampiranController';
-import authorize from '../middlewares/authorizations';
+import {authorize} from '../middlewares/authorizations';
 import { handleFileUploadArray } from '../middlewares/uploadFiles';
 
 const router = express.Router();

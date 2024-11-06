@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, query } from 'express-validator';
 import * as kegiatanController from '../controllers/kegiatanController';
-import authorize from '../middlewares/authorizations';
+import { authorize } from '../middlewares/authorizations';
 
 const router = express.Router();
 

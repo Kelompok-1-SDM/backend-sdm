@@ -15,15 +15,16 @@ export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
     return await db.select({ ...userTableColumns }).from(users).where(eq(users.role, role))
 }
 
-export async function fetchUserComplete(uidUser: string) {
+export async function fetchUserComplete(uidUser?: string, nip?: string) {
     let dataUser, dataKompetensi
-    [dataUser] = await db.select({ ...userTableColumns }).from(users).where(eq(users.userId, uidUser));
+    [dataUser] = await db.select({ ...userTableColumns }).from(users).where(nip ? eq(users.nip, nip) : eq(users.userId, uidUser!));
+    console.log(nip)
 
     if (!dataUser) return
 
     dataKompetensi = await db.select(kompetensisColumns).from(usersToKompetensis)
         .rightJoin(kompetensis, eq(usersToKompetensis.kompetensiId, kompetensis.kompetensiId))
-        .where(eq(usersToKompetensis.userId, uidUser))
+        .where(eq(usersToKompetensis.userId, dataUser.userId))
 
     return {
         ...dataUser,
@@ -73,7 +74,7 @@ export async function createUser(data: UserDataType) {
 
 export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]) {
 
-    let data: UsersToKompetensiDataType[]
+    let data: UsersToKompetensiDataType[] = []
     for (const kompetensiId of uidKompetensi) {
         data!.push(addTimestamps({
             userId: uidUser,

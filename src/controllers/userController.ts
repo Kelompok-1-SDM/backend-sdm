@@ -15,12 +15,14 @@ export async function fetchUsers(req: Request, res: Response) {
         return
     }
 
-    let { uid, role } = req.query
+    let { uid, role, nip } = req.query
     try {
         let data: any
 
         if (uid) {
             data = await userService.fetchUser(uid as string)
+        } else if (nip) {
+            data = await userService.fetchUser(undefined, nip as string)
         } else if (role) {
             data = await userService.fetchUserByRole(role as 'admin' | 'manajemen' | 'dosen')
         } else {
@@ -50,7 +52,7 @@ export async function fetchUsers(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -96,7 +98,7 @@ export async function fetchDosenHomepage(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -142,7 +144,7 @@ export async function fetchUserStatistic(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -183,7 +185,7 @@ export async function createUser(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -213,18 +215,34 @@ export async function addUserKompetensi(req: Request, res: Response) {
         ));
     } catch (err) {
         if (err instanceof Error) {
-            res.status(500).json(createResponse(
-                false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
-                err.message || 'An unknown error occurred!'
-            ))
-            return
+            if (err.message.toLowerCase().includes('references `users`')) {
+                res.status(404).json(createResponse(
+                    false,
+                    null,
+                    "One of user uid of not found, bad relationship"
+                ))
+                return
+            } else if (err.message.toLowerCase().includes('references `kompetensi`')) {
+                res.status(404).json(createResponse(
+                    false,
+                    null,
+                    "Kompetensi uid was not found, bad relationship"
+                ))
+                return
+            } else {
+                res.status(500).json(createResponse(
+                    false,
+                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    err.message || 'An unknown error occurred!'
+                ))
+                return
+            }
         }
 
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -290,7 +308,7 @@ export async function updateUser(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -335,7 +353,7 @@ export async function deleteUser(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }
@@ -372,7 +390,7 @@ export async function deleteUserKompetensi(req: Request, res: Response) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
                 false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return
@@ -381,7 +399,7 @@ export async function deleteUserKompetensi(req: Request, res: Response) {
         console.log(err)
         res.status(500).json(createResponse(
             false,
-            undefined,
+            null,
             "Mbuh mas"
         ))
     }

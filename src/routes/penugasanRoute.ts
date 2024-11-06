@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, query } from 'express-validator';
 import * as penugasanController from '../controllers/penugasanController';
-import authorize from '../middlewares/authorizations';
+import {authorize} from '../middlewares/authorizations';
 
 const router = express.Router();
 
