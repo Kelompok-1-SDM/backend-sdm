@@ -35,7 +35,7 @@ export async function createPenugasan(uidKegiatan: string, listUserDitugaskan: {
                 roleKegiatan: user.role
             })
         })
-        await db.insert(usersToKegiatans).values(batch!).onDuplicateKeyUpdate({ set: { userId: sql`user_id` } })
+        await db.insert(usersToKegiatans).values(batch!).onDuplicateKeyUpdate({ set: { userId: sql`values(${usersToKegiatans.userId})` } })
     }
 
     return await fetchKegiatanWithUser(uidKegiatan)

@@ -7,6 +7,7 @@ const poolConnection = mysql.createPool(dbCredentials);
 export const batchQuerySize = 10
 export const db = drizzle({ client: poolConnection, casing: 'snake_case', logger: true, schema, mode: 'default' });
 
+
 // Example timestamp wrapper function
 export function addTimestamps(data: any, isUpdate = false) {
     const timestamp = new Date();

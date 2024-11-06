@@ -124,7 +124,7 @@ export async function createKegiatan(kegiatanData: KegiatanDataType, listKompete
                     kompetensiId: tex
                 })
             })
-            await tx.insert(kompetensisToKegiatans).values(batch).onDuplicateKeyUpdate({ set: { kegiatanId: sql`kegiatan_id` } })
+            await tx.insert(kompetensisToKegiatans).values(batch).onDuplicateKeyUpdate({ set: { kegiatanId: sql`values(${kompetensisToKegiatans.kegiatanId})` } })
         }
     })
 
@@ -153,7 +153,7 @@ export async function updateKegiatan(uidKegiatan: string, data: Partial<Kegiatan
                 })
                 await tx.insert(kompetensisToKegiatans).values(batch).onDuplicateKeyUpdate({
                     set: {
-                        kegiatanId: sql`kegiatan_id`,
+                        kegiatanId: sql`values(${kompetensisToKegiatans.kegiatanId})`,
                     }
                 })
             }
