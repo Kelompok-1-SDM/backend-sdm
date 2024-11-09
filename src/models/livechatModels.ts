@@ -26,15 +26,15 @@ export interface IMessage extends Document {
 // ChatRoom Schema
 const ChatRoomSchema: Schema = new Schema({
     roomId: { type: String, required: true },
-    assignedUsers: [{ type: String, required: true }],
+    assignedUsers: [{ type: String, required: true, index: true }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, required: true },
 });
 
 // Message Schema with Attachments
 const MessageSchema: Schema = new Schema({
-    roomId: { type: String, required: true },
-    senderId: { type: String, required: true },
+    roomId: { type: String, required: true, index: true },
+    senderId: { type: String, required: true, index: true },
     message: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, required: true },

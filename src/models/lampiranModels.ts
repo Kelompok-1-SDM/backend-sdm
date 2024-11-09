@@ -1,24 +1,27 @@
-import { eq, getTableColumns } from "drizzle-orm";
-import { kegiatans, lampiranKegiatans } from "../db/schema";
+import { eq, getTableColumns, sql } from "drizzle-orm";
+import { lampiranKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 
 export type LampiranDataType = typeof lampiranKegiatans.$inferInsert
 export const lampiranColumns = getTableColumns(lampiranKegiatans)
 
-
+//TODO Improve at query peformance
 export async function fetchLampiranByUid(uidLampiran: string) {
-    const [temp] = await db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
+    const prepared = db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, sql.placeholder('uidLampiran'))).prepare()
+    const [temp] = await prepared.execute({ uidLampiran })
+
     return temp
 }
 
 async function fetchKegiatanWithLampiran(uidKegiatan: string) {
-    const [kgData] = await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
-    const lamp = await db.select().from(lampiranKegiatans).where(eq(lampiranKegiatans.kegiatanId, uidKegiatan))
+    const prepared = db.query.kegiatans.findFirst({
+        where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
+        with: {
+            lampiranKegiatan: true
+        }
+    }).prepare()
 
-    return {
-        ...kgData,
-        lampiran: lamp
-    }
+    return await prepared.execute({ uidKegiatan })
 }
 
 export async function createLampiran(dataLampiran: LampiranDataType[]) {
@@ -32,7 +35,9 @@ export async function createLampiran(dataLampiran: LampiranDataType[]) {
 }
 
 export async function deleteLampiranKegiatan(uidLampiran: string) {
-    const [temp] = await db.select({ kegiatanId: lampiranKegiatans.kegiatanId }).from(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
+    const prepared = db.select({ kegiatanId: lampiranKegiatans.kegiatanId }).from(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, sql.placeholder("uidLampiran"))).prepare()
+    const [temp] = await prepared.execute({ uidLampiran })
+    
     await db.delete(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
 
     return await fetchKegiatanWithLampiran(temp.kegiatanId)

@@ -1,5 +1,5 @@
-import { desc, eq, getTableColumns, sql } from "drizzle-orm";
-import { agendaKegiatans, kegiatans, progressAgenda, progressAgendaToProgressAttachment, progressAttachments } from "../db/schema";
+import { and, eq, getTableColumns, sql } from "drizzle-orm";
+import { agendaKegiatans, progressAgenda, progressAgendaToProgressAttachment, progressAttachments } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 
 export type AgendaKegiatanDataType = typeof agendaKegiatans.$inferInsert
@@ -8,6 +8,8 @@ export type ProgressAttachmentDataType = typeof progressAttachments.$inferInsert
 export const agendaColumns = getTableColumns(agendaKegiatans)
 export const progressColumns = getTableColumns(progressAgenda)
 export const attachColumns = getTableColumns(progressAttachments)
+
+//TODO Improve at query peformance
 
 export async function fetchProgress(uidProgress: string) {
     const prepared = db.query.progressAgenda.findFirst({
@@ -32,11 +34,10 @@ export async function fetchProgress(uidProgress: string) {
 
 // Internal only
 export async function fetchProgressAttach(hash: string) {
-    const prepared = db.query.progressAttachments.findFirst({
-        where: ((progressAttachments, { eq }) => eq(progressAttachments.hash, sql.placeholder('hash')))
-    }).prepare()
+    const prepared = db.select().from(progressAttachments).where(eq(progressAttachments.hash, sql.placeholder('hash'))).prepare()
 
-    return await prepared.execute({ hash })
+    const [res] = await prepared.execute({ hash })
+    return res
 }
 
 export async function fetchAgendaByKegiatan(uidKegiatan: string) {
@@ -144,13 +145,16 @@ export async function createAgenda(dataAgenda: AgendaKegiatanDataType) {
     return await fetchAgendaByKegiatan(dataAgenda.kegiatanId)
 }
 
-export async function updateAgenda(uidAgenda: string, dataAgenda: AgendaKegiatanDataType) {
+export async function updateAgenda(uidAgenda: string, dataAgenda: Partial<AgendaKegiatanDataType>) {
+    const prepared = db.select({ kegiatanId: agendaKegiatans.kegiatanId }).from(agendaKegiatans).where(eq(agendaKegiatans.agendaId, sql.placeholder('uidAgenda'))).prepare()
+
     await db.update(agendaKegiatans).set(addTimestamps(dataAgenda, true)).where(eq(agendaKegiatans.agendaId, uidAgenda))
 
-    return await fetchAgendaByKegiatan(dataAgenda.kegiatanId)
+    const [data] = await prepared.execute({ uidAgenda })
+    return await fetchAgendaByKegiatan(data.kegiatanId)
 }
 
-export async function updateProgress(uidProgress: string, dataProgress: ProgressAgendaDataType, dataAttachment?: ProgressAttachmentDataType[]) {
+export async function updateProgress(uidProgress: string, dataProgress: Partial<ProgressAgendaDataType>, dataAttachment?: ProgressAttachmentDataType[]) {
     await db.transaction(async (tx) => {
         await tx.update(progressAgenda).set(addTimestamps(dataProgress, true)).where(eq(progressAgenda.progressId, uidProgress))
 
@@ -185,7 +189,9 @@ export async function updateProgress(uidProgress: string, dataProgress: Progress
         }
     })
 
-    return await fetchAgenda(dataProgress.agendaId)
+    const prepared = db.select({ agendaId: progressAgenda.agendaId }).from(progressAgenda).where(eq(progressAgenda.progressId, sql.placeholder('uidProgress'))).prepare()
+    const [data] = await prepared.execute({ uidProgress })
+    return await fetchAgenda(data.agendaId)
 }
 
 export async function deleteAgenda(uidAgenda: string) {
@@ -200,4 +206,10 @@ export async function deleteProgress(uidProgress: string) {
     await db.delete(progressAgenda).where(eq(progressAgenda.agendaId, uidProgress))
 
     return dat
+}
+
+export async function deletAttachmentProgress(uidProgress: string, uidAttachment: string) {
+    await db.delete(progressAgendaToProgressAttachment).where(and(eq(progressAgendaToProgressAttachment.progressId, uidProgress), eq(progressAgendaToProgressAttachment.attachmentId, uidAttachment)))
+
+    return await fetchProgress(uidProgress)
 }

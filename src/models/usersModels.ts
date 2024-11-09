@@ -6,25 +6,26 @@ import { kompetensisColumns } from "./kompetensiModels";
 export type UserDataType = typeof users.$inferInsert
 export type UsersToKompetensiDataType = typeof usersToKompetensis.$inferInsert
 export const { password, ...userTableColumns } = getTableColumns(users)
-
+//TODO Improve at query peformance
 export async function fetchAllUser() {
     return await db.select({ ...userTableColumns }).from(users).orderBy(desc(users.nama));
 }
 
 export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
-    return await db.select({ ...userTableColumns }).from(users).where(eq(users.role, role))
+    const prepared = db.select({ ...userTableColumns }).from(users).where(eq(users.role, sql.placeholder('role'))).prepare()
+
+    return await prepared.execute({ role })
 }
 
 export async function fetchUserComplete(uidUser?: string, nip?: string) {
-    let dataUser, dataKompetensi
-    [dataUser] = await db.select({ ...userTableColumns }).from(users).where(nip ? eq(users.nip, nip) : eq(users.userId, uidUser!));
-    console.log(nip)
-
+    const prepared = db.select({ ...userTableColumns }).from(users).where(nip ? eq(users.nip, sql.placeholder('nip')) : eq(users.userId, sql.placeholder('uidUser'))).prepare();
+    const [dataUser] = await prepared.execute(nip ? { nip } : { uidUser })
     if (!dataUser) return
 
-    dataKompetensi = await db.select(kompetensisColumns).from(usersToKompetensis)
-        .rightJoin(kompetensis, eq(usersToKompetensis.kompetensiId, kompetensis.kompetensiId))
-        .where(eq(usersToKompetensis.userId, dataUser.userId))
+    const prepared1 = db.select(kompetensisColumns).from(usersToKompetensis)
+        .leftJoin(kompetensis, eq(usersToKompetensis.kompetensiId, kompetensis.kompetensiId))
+        .where(eq(usersToKompetensis.userId, sql.placeholder('uidUser'))).prepare()
+    const dataKompetensi = await prepared1.execute({ uidUser: dataUser.userId })
 
     return {
         ...dataUser,
@@ -33,13 +34,14 @@ export async function fetchUserComplete(uidUser?: string, nip?: string) {
 }
 
 export async function fetchUserStatistic(uidUser: string, year: number) {
-    const [dataUser] = await db.select({ ...userTableColumns }).from(users).where(eq(users.userId, uidUser));
-    const dataJumlahKegiatan = await db.select().from(jumlahKegiatan).where(year ? and(eq(jumlahKegiatan.userId, uidUser), eq(jumlahKegiatan.year, year)) : eq(jumlahKegiatan.userId, uidUser))
+    const prepared = db.select({ ...userTableColumns }).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare();
+    const [dataUser] = await prepared.execute({ uidUser })
+
+    const prepared1 = db.select().from(jumlahKegiatan).where(year ? and(eq(jumlahKegiatan.userId, sql.placeholder('uidUser')), eq(jumlahKegiatan.year, sql.placeholder('year'))) : eq(jumlahKegiatan.userId, sql.placeholder('uidUser'))).prepare()
+    const dataJumlahKegiatan = await prepared1.execute(year ? { uidUser, year } : { uidUser })
 
     let totalDalamSetahun: number = 0
-    for (const dat of dataJumlahKegiatan) {
-        totalDalamSetahun += dat.jumlahKegiatan
-    }
+    dataJumlahKegiatan.map((it) => totalDalamSetahun += it.jumlahKegiatan)
 
     return {
         ...dataUser,
@@ -49,18 +51,20 @@ export async function fetchUserStatistic(uidUser: string, year: number) {
 }
 
 export async function fetchUserByUid(uidUser: string) {
-    const [res] = await db.select({ ...userTableColumns }).from(users).where(eq(users.userId, uidUser))
+    const prepared = db.select({ ...userTableColumns }).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare()
+    const [res] = await prepared.execute({ uidUser })
+
     return res
 }
 
 export async function fetchUserForAuth(nip: string) {
-    const [res] = await db.select().from(users).where(eq(users.nip, nip))
+    const prepared = db.select().from(users).where(eq(users.nip, sql.placeholder('nip'))).prepare()
+    const [res] = await prepared.execute({ nip })
+
     return res
 }
 
 export async function createUser(data: UserDataType) {
-    data = addTimestamps(data)
-
     const [res] = await db.insert(users)
         .values(addTimestamps(data))
         .$returningId();
@@ -73,14 +77,12 @@ export async function createUser(data: UserDataType) {
 }
 
 export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]) {
-
-    let data: UsersToKompetensiDataType[] = []
-    for (const kompetensiId of uidKompetensi) {
-        data!.push(addTimestamps({
+    const data: UsersToKompetensiDataType[] = uidKompetensi.map((it) => {
+        return addTimestamps({
             userId: uidUser,
-            kompetensiId: kompetensiId
-        }))
-    }
+            kompetensiId: it
+        })
+    })
 
     await db.insert(usersToKompetensis).values(data!).onDuplicateKeyUpdate({
         set: {
@@ -88,12 +90,7 @@ export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]
         }
     })
 
-    const userKompetensi = await db.select().from(usersToKompetensis).where(eq(usersToKompetensis.userId, uidUser))
-    const user = await fetchUserByUid(uidUser)
-    return {
-        ...user,
-        kompetensi: userKompetensi
-    }
+    return await fetchUserComplete(uidUser)
 }
 
 // Internal only
@@ -110,22 +107,28 @@ export async function addJumlahKegiatan(uidUser: string, wasDecrement: boolean =
             }, true)
         })
 
-    const jmlhKgh = await db.select().from(jumlahKegiatan).where(eq(jumlahKegiatan.userId, uidUser))
-    const user = await fetchUserByUid(uidUser)
-    return {
-        ...user,
-        jumlahKegiatan: jmlhKgh
-    }
+    const prepared = db.query.users.findFirst({
+        where: ((user, { eq }) => eq(user.userId, sql.placeholder('uidUser'))),
+        with: {
+            userToJumlahKegiatam: true
+        }
+    }).prepare()
+    const data = await prepared.execute({ uidUser })
+
+    return data
 }
 
 export async function updateUser(uidUser: string, data: Partial<UserDataType>) {
     await db.update(users).set(addTimestamps(data, true)).where(eq(users.userId, uidUser))
-    const [res] = await db.select({ ...userTableColumns }).from(users).where(eq(users.userId, uidUser))
+
+    const prepared = db.select({ ...userTableColumns }).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare()
+    const [res] = await prepared.execute({ uidUser })
     return res
 }
 
 export async function deleteUser(uidUser: string) {
     const user = await fetchUserByUid(uidUser)
+
     await db.delete(users).where(eq(users.userId, uidUser))
 
     return user
@@ -133,18 +136,21 @@ export async function deleteUser(uidUser: string) {
 
 export async function deleteUserKompetensi(uidUser: string, uidKompetensi: string[]) {
     await db.transaction(async (tx) => {
-        for (const uidK of uidKompetensi) {
+        await Promise.all(uidKompetensi.map(async (it) => {
             await tx.delete(usersToKompetensis)
-                .where(and(eq(usersToKompetensis.userId, uidUser), eq(usersToKompetensis.kompetensiId, uidK)))
-        }
+                .where(and(eq(usersToKompetensis.userId, uidUser), eq(usersToKompetensis.kompetensiId, it)))
+        }))
     })
 
-    const userKompetensi = await db.select().from(usersToKompetensis).where(eq(usersToKompetensis.userId, uidUser))
-    const user = await fetchUserByUid(uidUser)
-    return {
-        ...user,
-        kompetensi: userKompetensi
-    }
+    const prepared = db.query.users.findFirst({
+        where: ((users, { eq }) => eq(users.userId, sql.placeholder('uidUser'))),
+        with: {
+            usersKompetensi: true
+        }
+    }).prepare()
+    const res = await prepared.execute({ uidUser })
+
+    return res
 }
 
 // export async function deleteJumlahKegiatan(uidUser: string, year: number, month: number) {

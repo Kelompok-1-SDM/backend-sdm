@@ -16,6 +16,11 @@ export async function fetchUsers(req: Request, res: Response) {
     }
 
     let { uid, role, nip } = req.query
+
+    if (uid === "") {
+        uid = req.user?.userId
+    }
+
     try {
         let data: any
 
@@ -71,6 +76,11 @@ export async function fetchDosenHomepage(req: Request, res: Response) {
     }
 
     let { uid: uidUser } = req.query
+
+    if (uidUser === "") {
+        uidUser = req.user?.userId
+    }
+
     try {
 
         const data = await userService.homePageMobile(uidUser as string)
@@ -117,6 +127,11 @@ export async function fetchUserStatistic(req: Request, res: Response) {
     }
 
     let { uid: uidUser, year } = req.query
+
+    if (uidUser === "") {
+        uidUser = req.user?.userId
+    }
+
     try {
 
         const data = await userService.statistic(uidUser as string, Number(year))
@@ -174,12 +189,21 @@ export async function createUser(req: Request, res: Response) {
         ));
     } catch (err) {
         if (err instanceof Error) {
-            res.status(500).json(createResponse(
-                false,
-                process.env.NODE_ENV === 'development' ? err.stack : undefined,
-                err.message || 'An unknown error occurred!'
-            ))
-            return
+             if (err.message.toLowerCase().includes('duplicate')) {
+                res.status(422).json(createResponse(
+                    false,
+                    undefined,
+                    "NIP or email is duplicated"
+                ))
+                return
+            } else {
+                res.status(500).json(createResponse(
+                    false,
+                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    err.message || 'An unknown error occurred!'
+                ))
+                return
+            }
         }
 
         console.log(err)
@@ -261,10 +285,14 @@ export async function updateUser(req: Request, res: Response) {
     }
 
     const { nip, password, nama, role } = req.body
-    const { uid } = req.query
+    let { uid: uidUser } = req.query
     const file = req.file as Express.Multer.File;
 
-    if (req.user!.role !== 'admin' && req.user!.userId !== uid as string) {
+    if (uidUser === "") {
+        uidUser = req.user?.userId
+    }
+
+    if (req.user!.role !== 'admin' && req.user!.userId !== uidUser as string) {
         res.status(401).json(createResponse(
             false,
             null,
@@ -274,7 +302,7 @@ export async function updateUser(req: Request, res: Response) {
     }
 
     try {
-        const data = await userService.updateUser(uid as string, { nip, password, nama, role, }, file)
+        const data = await userService.updateUser(uidUser as string, { nip, password, nama, role, }, file)
 
         if (data === "user_is_not_found") {
             res.status(404).json(createResponse(false, null, "User not found"))
@@ -404,49 +432,3 @@ export async function deleteUserKompetensi(req: Request, res: Response) {
         ))
     }
 }
-
-// export async function deleteUserJumlahKegiatan(req: Request, res: Response) {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//         res.status(400).json(createResponse(
-//             false,
-//             null,
-//             "Input error",
-//             errors.array()
-//         ));
-//         return
-//     }
-
-//     const { year, month } = req.body
-//     const { uid } = req.query
-
-//     try {
-//         const data = await userService.deleteUserJumlahKegiatan(uid as string, Number(year), Number(month))
-//         if (data === "user_is_not_found") {
-//             res.status(404).json(createResponse(false, null, "User not found"))
-//             return
-//         }
-
-//         res.status(200).json(createResponse(
-//             true,
-//             data,
-//             "OK"
-//         ));
-//     } catch (err) {
-//         if (err instanceof Error) {
-//             res.status(500).json(createResponse(
-//                 false,
-//                 process.env.NODE_ENV === 'development' ? err.stack : undefined,
-//                 err.message || 'An unknown error occurred!'
-//             ))
-//             return
-//         }
-
-//         console.log(err)
-//         res.status(500).json(createResponse(
-//             false,
-//             undefined,
-//             "Mbuh mas"
-//         ))
-//     }
-// }

@@ -16,8 +16,12 @@ export async function fetchKegiatan(req: Request, res: Response) {
         return
     }
 
-    const { uid_user: uidUser, uid: uidKegiatan, status } = req.query
+    let { uid_user: uidUser, uid: uidKegiatan, status } = req.query
     let data: any
+
+    if (uidUser === "") {
+        uidUser = req.user?.userId
+    }
 
     try {
         if (uidUser) {

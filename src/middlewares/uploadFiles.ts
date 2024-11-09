@@ -37,8 +37,6 @@ const uploadSingleFile = multer({
  */
 export const handleFileUpload = (req: Request<ParamsDictionary, any, any, ParsedQs>, res: Response, next: NextFunction) => {
 
-    if (!req.file) return next()
-
     uploadSingleFile(req as Request, res, (err) => {
         if (err instanceof multer.MulterError) {
             // Multer-specific error
@@ -77,9 +75,6 @@ const uploadMultiple = multer({
 }).array('files', 10); // Expect up to 10 files with field name 'file'
 
 export const handleFileUploadArray = (req: Request, res: Response, next: NextFunction) => {
-
-    // Check if there's a file in the request
-    if (!req.files) return next(); // No file uploaded, proceed to the next middleware
 
     uploadMultiple(req, res, (err: any) => {
         if (err instanceof multer.MulterError) {

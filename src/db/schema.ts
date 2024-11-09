@@ -1,9 +1,8 @@
-import { int, datetime, mysqlEnum, text, varchar, mysqlTable, longtext, year, index, foreignKey, tinyint, primaryKey } from 'drizzle-orm/mysql-core';
+import { int, datetime, mysqlEnum, text, varchar, mysqlTable, longtext, year, index, tinyint, primaryKey } from 'drizzle-orm/mysql-core';
 import { createId } from '@paralleldrive/cuid2';
 import { sql } from 'drizzle-orm/sql';
 import { timestampsHelper } from './helper';
 import { relations } from 'drizzle-orm';
-import { unique } from 'drizzle-orm/pg-core';
 
 export const users = mysqlTable('users', {
     userId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
@@ -23,6 +22,23 @@ export const users = mysqlTable('users', {
         roleIdx: index("role_index").on(table.role)
     }
 });
+
+export const resetPassword = mysqlTable('password_reset', {
+    resetId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
+    userId: varchar({ length: 128 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+
+    token: varchar({ length: 255 }),
+    expiresAt: datetime().default(sql`CURRENT_TIMESTAMP`),
+
+    ...timestampsHelper
+})
+
+export const resetToUser = relations(resetPassword, ({ one }) => ({
+    users: one(users, {
+        fields: [resetPassword.userId],
+        references: [users.userId]
+    })
+}))
 
 export const usersToKompetensis = mysqlTable('users_to_kompetensi', {
     userId: varchar({ length: 128 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
@@ -49,7 +65,10 @@ export const usersToKompetensisRelations = relations(usersToKompetensis, ({ one 
 
 
 export const usersRelations = relations(users, ({ many }) => ({
-    usersKegiatans: many(usersToKegiatans)
+    usersKegiatans: many(usersToKegiatans),
+    usersKompetensi: many(usersToKompetensis),
+    userToJumlahKegiatam: many(jumlahKegiatan),
+    passwordReset: many(resetPassword)
 }));
 
 export const kompetensis = mysqlTable('kompetensi', {
@@ -147,7 +166,7 @@ export const usersToKegiatansRelations = relations(usersToKegiatans, ({ one }) =
 }));
 
 export const jumlahKegiatan = mysqlTable('jumlah_kegiatan', {
-    userId: varchar({ length: 128 }).notNull().references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    userId: varchar({ length: 128 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
     year: year().notNull(),
     month: tinyint().notNull(),
     jumlahKegiatan: int().default(0).notNull(),
@@ -217,9 +236,9 @@ export const agendaKegiatansRelations = relations(agendaKegiatans, ({ one, many 
     progress: many(progressAgenda)
 }));
 
-export const progressAgenda = mysqlTable('progress_agenda', {
+export const progressAgenda = mysqlTable('prog_agenda', {
     progressId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
-    agendaId: varchar({ length: 128 }).notNull().references(() => (agendaKegiatans.agendaId), { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    agendaId: varchar({ length: 128 }).references(() => (agendaKegiatans.agendaId), { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     deskripsiProgress: longtext().notNull(),
 
@@ -234,7 +253,7 @@ export const progressAgendaRelations = relations(progressAgenda, ({ one, many })
     progressAgendaToProgressAttachment: many(progressAgendaToProgressAttachment)
 }))
 
-export const progressAttachments = mysqlTable('progress_attachment', {
+export const progressAttachments = mysqlTable('prog_attach', {
     attachmentId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
 
     hash: varchar({ length: 128 }).notNull().unique(),
@@ -251,24 +270,13 @@ export const progressAttachmentsRelations = relations(progressAttachments, ({ ma
     progressAgendaToProgressAttachment: many(progressAgendaToProgressAttachment)
 }))
 
-export const progressAgendaToProgressAttachment = mysqlTable('progress_to_attachments', {
-    progressId: varchar({ length: 128 }).notNull(),
-    attachmentId: varchar({ length: 128 }).notNull(),
+export const progressAgendaToProgressAttachment = mysqlTable('prog_to_attach', {
+    progressId: varchar({ length: 128 }).references(() => (progressAgenda.progressId), { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    attachmentId: varchar({ length: 128 }).references(() => (progressAttachments.attachmentId), { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
 
     ...timestampsHelper
 }, (table) => {
     return {
-        // Shorter foreign key name
-        progressReference: foreignKey({
-            columns: [table.progressId],
-            foreignColumns: [progressAgenda.progressId],
-            name: 'fk_prog_attach'  // Shortened name for foreign key
-        }),
-        attachmentReference: foreignKey({
-            columns: [table.attachmentId],
-            foreignColumns: [progressAttachments.attachmentId],
-            name: 'fk_attach_prog'  // Shortened name for foreign key
-        }),
         messageIdx: index('progress_index').on(table.progressId),
         pk: primaryKey({ columns: [table.progressId, table.attachmentId] }),
     };

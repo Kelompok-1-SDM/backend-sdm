@@ -13,33 +13,40 @@ export async function isUserInRoom(uidRoom: string, uidUser: string): Promise<bo
 
 export async function joinRoom(uidRoom: string, uidUser: string) {
     const chatRoom = await isUserInRoom(uidRoom, uidUser);
-    // if (chatRoom && !chatRoom.assignedUsers!.includes(uidUser)) return "not_allowed";
     if (!chatRoom) return "not_allowed"
     return "ok";
 }
 
-export async function sendMessage(uidRoom: string, uidUser: string, message: string, attachment: { filename: string, url: string, type: string }[]) {
-    const newMessage = new Message(addTimestamps({ roomId: uidRoom, senderId: uidUser, message, attachment }));
+export async function sendMessage(uidRoom: string, uidUser: string, message: string, attachments: { filename: string, url: string, type: string }[]) {
+    const newMessage = new Message(addTimestamps({ roomId: uidRoom, senderId: uidUser, message, attachments }));
     await newMessage.save();
     return {
-        ...newMessage,
-        uidRoom: newMessage.roomId,
-        uidUser: newMessage.senderId,
+        uidRoom: newMessage!.roomId,
+        uidUser: newMessage!.senderId,
 
         roomId: undefined,
-        senderId: undefined
+        senderId: undefined,
+
+        message: newMessage!.message,
+        createdAt: newMessage!.createdAt,
+        updatedAt: newMessage!.updatedAt,
+        attachments: newMessage!.attachments
     };
 }
 
 export async function editMessage(messageId: string, message: string) {
     const updatedMessage = await Message.findByIdAndUpdate(messageId, addTimestamps({ message }, true), { new: true });
     return {
-        ...updatedMessage,
-        uidRoom: updatedMessage?.roomId,
-        uidUser: updatedMessage?.senderId,
+        uidRoom: updatedMessage!.roomId,
+        uidUser: updatedMessage!.senderId,
 
         roomId: undefined,
-        senderId: undefined
+        senderId: undefined,
+
+        message: updatedMessage!.message,
+        createdAt: updatedMessage!.createdAt,
+        updatedAt: updatedMessage!.updatedAt,
+        attachments: updatedMessage!.attachments
     };
 }
 
@@ -59,4 +66,27 @@ export async function uploadMessageAttachment(files: Express.Multer.File[]) {
     )
 
     return res
+}
+
+export async function fetchMessageHistory(uidroom: string) {
+    const data = await ChatRoom.findOne({ roomId: uidroom })
+    if (!data) return "room_not_found"
+
+    const temp = await Message.find({ roomId: uidroom }).sort({ createdAt: 1 })
+    const messages = temp.map((it) => {
+        return {
+            uidRoom: it.roomId,
+            uidUser: it.senderId,
+
+            roomId: undefined,
+            senderId: undefined,
+
+            message: it.message,
+            createdAt: it.createdAt,
+            updatedAt: it.updatedAt,
+            attachments: it.attachments
+        }
+    })
+
+    return messages
 }

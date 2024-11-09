@@ -25,8 +25,9 @@ export async function createKegiatan(kegiatanData: kegiatanModels.KegiatanDataTy
 
     const keg = await kegiatanModels.createKegiatan(kegiatanData, listKompetensiUid)
 
+    // Create chatroom
     const chtRoom = new ChatRoom(addTimestamps({
-        roomId: keg.kegiatanId,
+        roomId: keg!.kegiatanId,
     }))
     await chtRoom.save()
 
@@ -44,7 +45,8 @@ export async function deleteKegiatan(uidKegiatan: string) {
     const ap = await kegiatanModels.deleteKegiatan(uidKegiatan)
     if (!ap) return "kegiatan_is_not_found"
 
-    await ChatRoom.findByIdAndDelete(uidKegiatan)
+    // Rempve chatroom
+    await ChatRoom.findOneAndDelete({ roomId: uidKegiatan })
     await Message.deleteMany({ roomId: uidKegiatan })
 
     return ap

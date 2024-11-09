@@ -64,8 +64,8 @@ export async function createAgenda(req: Request, res: Response) {
         return
     }
 
-    const { uid: uidKegiatan } = req.query
-    const { uid_user: userUid, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
+    const { uid_kegiatan: uidKegiatan } = req.query
+    let { uid_user: userUid, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
 
     if (req.user?.role === 'dosen') {
         const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
@@ -90,6 +90,14 @@ export async function createAgenda(req: Request, res: Response) {
 
     try {
         const data = await agendaServices.createAgenda({ kegiatanId: (uidKegiatan as string), userId: userUid, jadwalAgenda, namaAgenda, deskripsiAgenda, status })
+        if (data === 'user_not_allowed') {
+            res.status(401).json(createResponse(
+                false,
+                null,
+                "User is not registered on this kegiatan"
+            ))
+            return
+        }
         res.status(200).json(createResponse(
             true,
             data,
@@ -142,7 +150,8 @@ export async function createProgressAgenda(req: Request, res: Response) {
     }
 
     try {
-        const { deskripsi_progress: deskripsiProgress, uid_agenda: uidAgenda } = req.body
+        const { uid_agenda: uidAgenda } = req.query
+        const { deskripsi_progress: deskripsiProgress } = req.body
         const files = req.files as Express.Multer.File[];
 
         if (!files || files.length === 0) {
@@ -154,7 +163,7 @@ export async function createProgressAgenda(req: Request, res: Response) {
             return
         }
 
-        const data = await agendaServices.createProgressAgenda({ agendaId: uidAgenda as string, deskripsiProgress }, files)
+        const data = await agendaServices.createProgressAgenda({ agendaId: uidAgenda as string, deskripsiProgress: deskripsiProgress as string }, files)
         res.status(200).json(createResponse(
             true,
             data,
@@ -201,7 +210,11 @@ export async function updateAgenda(req: Request, res: Response) {
     }
 
     const { uid: uidAgenda } = req.query
-    const { uid_user: userUid, kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
+    let { uid_user: userUid, kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
+
+    if (userUid === "") {
+        userUid = req.user?.userId
+    }
 
     if (req.user?.role === 'dosen') {
         const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
@@ -213,19 +226,18 @@ export async function updateAgenda(req: Request, res: Response) {
             ));
             return
         }
-
-        if (wasAllowed.role == 'anggota') {
-            res.status(401).json(createResponse(
-                false,
-                null,
-                "You're not PIC, or higher role"
-            ));
-            return
-        }
     }
 
     try {
         const data = await agendaServices.updateAgenda(uidAgenda as string, { kegiatanId: (uidKegiatan as string), userId: userUid, jadwalAgenda, namaAgenda, deskripsiAgenda, status })
+        if (data === 'user_not_allowed') {
+            res.status(401).json(createResponse(
+                false,
+                null,
+                "User is not registered on this kegiatan"
+            ))
+            return
+        }
         res.status(200).json(createResponse(
             true,
             data,
@@ -283,7 +295,7 @@ export async function updateProgressAgenda(req: Request, res: Response) {
         const { deskripsi_progress: deskripsiProgress, uid_agenda: uidAgenda } = req.body
         const files = req.files as Express.Multer.File[];
 
-        const data = await agendaServices.updateProgressAgenda(uidProgress as string, { agendaId: uidAgenda as string, deskripsiProgress }, files)
+        const data = await agendaServices.updateProgressAgenda(uidProgress as string, { agendaId: uidAgenda as string, deskripsiProgress: deskripsiProgress as string }, files)
         res.status(200).json(createResponse(
             true,
             data,
@@ -380,6 +392,52 @@ export async function deleteProgressAgenda(req: Request, res: Response) {
 
     try {
         const data = await agendaServices.deleteProgress(uidProgress as string)
+
+        if (data === "progress_is_not_found") {
+            res.status(404).json(createResponse(false, null, "Progress not found"))
+            return
+        }
+
+        res.status(200).json(createResponse(
+            true,
+            data,
+            "OK"
+        ));
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            null,
+            "Mbuh mas"
+        ))
+    }
+}
+
+export async function deleteAttachmentProgress(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    const { uid: uidProgress, uid_attachment: uidAttachment } = req.query
+
+    try {
+        const data = await agendaServices.deletAttachmentProgress(uidProgress as string, uidAttachment as string)
 
         if (data === "progress_is_not_found") {
             res.status(404).json(createResponse(false, null, "Progress not found"))

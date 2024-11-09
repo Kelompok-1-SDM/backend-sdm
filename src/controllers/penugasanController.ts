@@ -29,7 +29,7 @@ export async function tugaskanKegiatan(req: Request, res: Response) {
         ));
     } catch (err) {
         if (err instanceof Error) {
-            if (err.message.toLowerCase().includes('references `user`')) {
+            if (err.message.toLowerCase().includes('references `users`')) {
                 res.status(404).json(createResponse(
                     false,
                     null,
@@ -87,7 +87,7 @@ export async function updatePenugasanKegiatan(req: Request, res: Response) {
         ));
     } catch (err) {
         if (err instanceof Error) {
-            if (err.message.toLowerCase().includes('references `user`')) {
+            if (err.message.toLowerCase().includes('references `users`')) {
                 res.status(404).json(createResponse(
                     false,
                     null,

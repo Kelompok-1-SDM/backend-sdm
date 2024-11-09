@@ -26,3 +26,11 @@ export const uploadFileToCdn = async (file: Express.Multer.File, hash: string, t
     await minioClient.putObject(bucketName, fileName, file.buffer, file.buffer.length, metaData); // Upload directly using buffer
     return `https://${process.env.MINIO_ENDPOINT_PUBLIC!}/${bucketName}/${fileName}`
 }
+
+export function generateResetToken() {
+    const token = crypto.randomBytes(32).toString('hex');
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+
+    return { token, hash, expiresAt };
+}

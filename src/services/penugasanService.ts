@@ -27,7 +27,7 @@ export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitug
     const kegKomp = await kegiatanModels.fetchKompetensiKegiatan(uidKegiatan)
     await Promise.all(listUserDitugaskan.map(async (ap) => {
         if (ap.status === 'selesai') {
-            await usersModels.addUserKompetensi(ap.uid_user, kegKomp.kompetensi)
+            await usersModels.addUserKompetensi(ap.uid_user, kegKomp.kompetensi!)
             await usersModels.addJumlahKegiatan(ap.uid_user, undefined, kegKomp.tanggal!.getFullYear(), kegKomp.tanggal!.getMonth() + 1)
         }
     }))

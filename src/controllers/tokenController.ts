@@ -21,7 +21,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         const data: any = await tokenService.login(nip, password);
 
         switch (data) {
-            case "user_not_found":
+            case "user_is_not_found":
                 res.status(404).json(createResponse(
                     false,
                     null,

@@ -13,7 +13,7 @@ router.post('/',
     query('uid_kegiatan').notEmpty().withMessage("This key should not be empty"),
     ], lampiranController.createLampiran)
 
-router.delete('/lampiran',
+router.delete('/',
     [authorize(['admin', 'manajemen', 'dosen']),
     query('uid').isString().trim().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),

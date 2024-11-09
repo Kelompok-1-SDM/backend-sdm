@@ -11,6 +11,13 @@ export const authorize = (requiredRoles: ('admin' | 'manajemen' | 'dosen')[]) =>
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
 
+        // TODO do this costant token role and uid value
+        // if (token === "jomokkk") {
+
+        //     // req.user = { userId, role }
+        //     next()
+        // }
+
         if (!token) {
             res.status(401).json(createResponse(
                 false,

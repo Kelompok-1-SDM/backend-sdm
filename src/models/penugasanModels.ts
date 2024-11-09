@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import { kegiatans, users, usersToKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 import { userTableColumns } from "./usersModels";
@@ -6,17 +6,23 @@ import { kegiatansColumns } from "./kegiatanModels";
 
 export const userToKegiatanColumns = getTableColumns(usersToKegiatans)
 
+// Internal Only
+export async function fetchUserRoleInKegiatan(uidKegiatan: string, uidUser: string) {
+    const prepared = db.select({ role: usersToKegiatans.roleKegiatan }).from(usersToKegiatans).where(and(eq(usersToKegiatans.kegiatanId, sql.placeholder('uidKegiatan')), eq(usersToKegiatans.userId, sql.placeholder('uidUser')))).prepare()
+    const [temp] = await prepared.execute({ uidKegiatan, uidUser })
 
-export async function fetchUserRoleInKegiatan(uideKegiatan: string, uidUser: string) {
-    const [temp] = await db.select({ role: usersToKegiatans.roleKegiatan }).from(usersToKegiatans).where(and(eq(usersToKegiatans.kegiatanId, uideKegiatan), eq(usersToKegiatans.userId, uidUser)))
     return temp
 }
 
 async function fetchKegiatanWithUser(uidKegiatan: string) {
-    const [kgData] = await db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
-    const userData = await db.select({ ...kegiatansColumns, user: userTableColumns }).from(usersToKegiatans)
+    const prepared = db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))).prepare()
+    const [kgData] = await prepared.execute({ uidKegiatan })
+
+    const prepared1 = db.select({ ...kegiatansColumns, user: userTableColumns }).from(usersToKegiatans)
+        .rightJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
         .rightJoin(users, eq(users.userId, usersToKegiatans.userId))
-        .where(eq(usersToKegiatans.kegiatanId, uidKegiatan))
+        .where(eq(usersToKegiatans.kegiatanId, sql.placeholder('uidKegiatan'))).prepare()
+    const userData = await prepared1.execute({ uidKegiatan })
 
     return {
         ...kgData,
@@ -31,7 +37,7 @@ export async function createPenugasan(uidKegiatan: string, listUserDitugaskan: {
         batch = batch.map((user) => {
             return addTimestamps({
                 kegiatanId: uidKegiatan,
-                userId: user.uid,
+                userId: user.uid_user,
                 roleKegiatan: user.role
             })
         })
@@ -47,7 +53,7 @@ export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitug
         batch = batch.map((user) => {
             return addTimestamps({
                 kegiatanId: uidKegiatan,
-                userId: user.uid,
+                userId: user.uid_user,
                 roleKegiatan: user.role
             })
         })

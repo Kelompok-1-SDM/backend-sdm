@@ -14,9 +14,9 @@ router.get('/',
 
 router.post('/',
     [authorize(['admin', 'manajemen', 'dosen']),
-    query('uid').isString().trim().withMessage('This key is required and is string'),
-    query('uid').notEmpty().withMessage("This key should be not empty"),
-    body('uid_user').isString().trim().withMessage('This key is required and is string'),
+    query('uid_kegiatan').isString().trim().withMessage('This key is required and is string'),
+    query('uid_kegiatan').notEmpty().withMessage("This key should be not empty"),
+    body('uid_user').isString().trim().withMessage('This key is optional and is string'),
     body('uid_user').notEmpty().withMessage("This key should be not empty"),
     body('jadwal_agenda').isISO8601().trim().toDate().withMessage('This key is required and is ISO8601'),
     body('jadwal_agenda').notEmpty().withMessage("This key should be not empty"),
@@ -24,7 +24,7 @@ router.post('/',
     body('nama_agenda').notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_agenda').isString().trim().withMessage('This key is required and is string'),
     body('deskripsi_agenda').notEmpty().withMessage("This key should be not empty"),
-    body('status').isIn(['rencana', 'jalan', 'selesai']).trim().withMessage('List tugaskan(role) are "rencana", "jalan", "selesai"'),
+    body('status').isIn(['rencana', 'jalan', 'selesai']).trim().withMessage("Status are 'rencana', 'jalan', 'selesai'"),
     body('status').notEmpty().withMessage("This key should be not empty"),
     ], agendaController.createAgenda)
 
@@ -42,19 +42,18 @@ router.put('/',
     query('uid').isString().trim().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty"),
     body('uid_user').isString().optional().trim().withMessage('This key is optional and is string'),
-    body('uid_user').optional().notEmpty().withMessage("This key should be not empty"),
     body('jadwal_agenda').isISO8601().optional().trim().toDate().withMessage('This key is optional and is ISO8601'),
     body('jadwal_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('nama_agenda').isString().optional().trim().withMessage('This key is optional and is string'),
     body('nama_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_agenda').isString().optional().trim().withMessage('This key is optional and is string'),
     body('deskripsi_agenda').optional().notEmpty().withMessage("This key should be not empty"),
-    body('status').isIn(['rencana', 'jalan', 'selesai']).optional().trim().withMessage('List tugaskan(role) are "rencana", "jalan", "selesai"'),
+    body('status').isIn(['rencana', 'jalan', 'selesai']).optional().trim().withMessage("List tugaskan(role) are 'rencana', 'jalan', 'selesai'"),
     body('status').optional().notEmpty().withMessage("This key should be not empty"),
-    ], agendaController.createAgenda)
+    ], agendaController.updateAgenda)
 
 
-router.post('/progress',
+router.put('/progress',
     [authorize(['admin', 'manajemen', 'dosen']),
         handleFileUploadArray,
     query('uid').isString().trim().withMessage('This key is optional and is string'),
@@ -63,7 +62,7 @@ router.post('/progress',
     body('uid_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_progress').isString().optional().trim().withMessage('This key is optional and is string'),
     body('deskripsi_progress').optional().notEmpty().withMessage("This key should be not empty"),
-    ], agendaController.createProgressAgenda)
+    ], agendaController.updateProgressAgenda)
 
 router.delete('/',
     [authorize(['admin', 'manajemen', 'dosen']),
@@ -76,5 +75,13 @@ router.delete('/progress',
     query('uid').isString().trim().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty")
     ], agendaController.deleteProgressAgenda)
+
+router.delete('/progress-attachment',
+    [authorize(['admin', 'manajemen', 'dosen']),
+    query('uid').isString().trim().withMessage('This key is required and is string'),
+    query('uid').notEmpty().withMessage("This key should be not empty"),
+    query('uid_attachment').isString().trim().withMessage('This key is required and is string'),
+    query('uid_attachment').notEmpty().withMessage("This key should be not empty")
+    ], agendaController.deleteAttachmentProgress)
 
 export default router;

@@ -1,4 +1,5 @@
 import * as agendaModels from '../models/agendaModels'
+import { fetchUserRoleInKegiatan } from '../models/penugasanModels'
 import { calculateFileHash, uploadFileToCdn } from './utilsService'
 import path from 'path'
 
@@ -23,7 +24,9 @@ export async function fetchAgenda(uidAgenda: string) {
 }
 
 export async function createAgenda(dataAgenda: agendaModels.AgendaKegiatanDataType) {
-    
+    const allowed = await fetchUserRoleInKegiatan(dataAgenda.kegiatanId, dataAgenda.userId)
+    if (!allowed) return "user_not_allowed"
+
     return await agendaModels.createAgenda(dataAgenda)
 }
 
@@ -38,8 +41,13 @@ export async function createProgressAgenda(dataProgress: agendaModels.ProgressAg
 }
 
 export async function updateAgenda(uidAgenda: string, dataAgenda: agendaModels.AgendaKegiatanDataType) {
+    // TODO Do ntoofication`
+
     const ap = await agendaModels.fetchAgenda(uidAgenda)
     if (!ap) return "agenda_is_not_found"
+
+    const allowed = await fetchUserRoleInKegiatan(dataAgenda.kegiatanId, dataAgenda.userId)
+    if (!allowed) return "user_not_allowed"
 
     return await agendaModels.updateAgenda(uidAgenda, dataAgenda)
 }
@@ -49,9 +57,13 @@ export async function updateProgressAgenda(uidProgress: string, dataProgress: ag
     const ap = await agendaModels.fetchProgress(uidProgress)
     if (!ap!.agendaId) return "progress_is_not_found"
 
-    const upload = await Promise.all(
-        files.map(async (file) => await findCurrentRecord(file))
-    )
+    let upload
+    if (files) {
+        upload = await Promise.all(
+            files.map(async (file) => await findCurrentRecord(file))
+        )
+    }
+
 
     return await agendaModels.updateProgress(uidProgress, dataProgress, upload)
 }
@@ -70,3 +82,9 @@ export async function deleteProgress(uidProgress: string) {
     return ap
 }
 
+export async function deletAttachmentProgress(uidProgress: string, uidAttachment: string) {
+    const ap = await agendaModels.deleteProgress(uidProgress)
+    if (!ap) return "progress_is_not_found"
+
+    return await agendaModels.deletAttachmentProgress(uidProgress, uidAttachment)
+}

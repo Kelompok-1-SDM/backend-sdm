@@ -25,6 +25,7 @@ import cors from 'cors';
 
 import { livechatRoutes } from './routes/livechatRoute';
 import { socketAuth } from './middlewares/authorizations';
+import { createResponse } from './utils/utils';
 
 const app = express()
 const server = createServer(app);
@@ -56,8 +57,6 @@ const livechatSocket = io.of('/api/livechat')
 livechatSocket.use(socketAuth);
 
 livechatSocket.on('connection', (socket) => {
-    console.log('connection has been made')
-
     socket.on('error', (err: Error) => {
         try {
             const errorInfo = JSON.parse(err.message);
@@ -67,10 +66,6 @@ livechatSocket.on('connection', (socket) => {
         }
     });
     livechatRoutes(io, socket);
-
-    socket.on('disconnect', () => { console.log('User disconnected') });
-
-
 });
 
 
