@@ -9,7 +9,11 @@ export const kegiatansColumns = getTableColumns(kegiatans)
 
 //TODO Improve at query peformance
 export async function fetchAllKegiatan() {
-    return await db.query.kegiatans.findMany()
+    return await db.query.kegiatans.findMany({
+        with: {
+            kompetensiKegiatan: true
+        }
+    })
 }
 
 export async function fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser: string, month?: number) {
