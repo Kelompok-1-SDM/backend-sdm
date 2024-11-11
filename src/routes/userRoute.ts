@@ -20,6 +20,10 @@ router.get('/homepage-mobile',
     query('uid').isString().trim().toLowerCase().withMessage("This key is optional and it's string"),
     ], userController.fetchDosenHomepage)
 
+router.get('/homepage-web',
+    [authorize(['admin', 'manajemen'])]
+    , userController.fetchWebHomepage)
+
 router.get('/statistic',
     [authorize(['admin', 'manajemen', 'dosen']),
     query('uid').isString().trim().toLowerCase().withMessage("This key is optional and it's string"),

@@ -1,6 +1,6 @@
 import { addTimestamps, db } from "./utilsModel";
 import { jumlahKegiatan, kompetensis, users, usersToKompetensis } from "../db/schema";
-import { and, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, sql, count } from "drizzle-orm";
 import { kompetensisColumns } from "./kompetensiModels";
 
 export type UserDataType = typeof users.$inferInsert
@@ -31,6 +31,13 @@ export async function fetchUserComplete(uidUser?: string, nip?: string) {
         ...dataUser,
         kompetensi: dataKompetensi
     }
+}
+
+export async function fetchUserCount(role: 'dosen' | 'manajemen') {
+    const prepared = db.select({ count: count(users.userId) }).from(users).where(eq(users.role, sql.placeholder('role'))).prepare()
+    const [res] = await prepared.execute({ role })
+
+    return res.count
 }
 
 export async function fetchUserStatistic(uidUser: string, year: number) {

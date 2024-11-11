@@ -4,7 +4,7 @@ import * as usersModels from "../models/usersModels";
 import * as kegiatanModels from "../models/kegiatanModels"
 import { calculateFileHash, uploadFileToCdn } from "./utilsService";
 
-export async function homePageMobile(uidUser: string) {
+export async function homepageMobile(uidUser: string) {
     const temp = await usersModels.fetchUserByUid(uidUser)
     if (!temp) return "user_is_not_found"
 
@@ -18,6 +18,25 @@ export async function homePageMobile(uidUser: string) {
         duaTugasTerbaru: duaTugasTerbaru.kegiatan,
         tugasBerlangsung,
         statistik: stats
+    }
+}
+
+export async function homepageWeb() {
+    // Jumlah-jumlah
+    const jumlahDosen = await usersModels.fetchUserCount('dosen')
+    const jumlahManajemen = await usersModels.fetchUserCount('manajemen')
+    const jumlahKegiatan = await kegiatanModels.fetchKegiatanCountAll()
+    const jumlahKegiatanPerTahun = await kegiatanModels.fetchKegiatanCountEachYear()
+
+    // Peforma kegiatan
+    const peformaKegiatan = await kegiatanModels.fetchPeformaKegiatan(new Date().getFullYear())
+
+    return {
+        jumlahDosen,
+        jumlahManajemen,
+        jumlahKegiatan,
+        jumlahKegiatanPerTahun,
+        peformaKegiatan
     }
 }
 

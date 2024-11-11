@@ -1,5 +1,5 @@
-import { and, desc, eq, getTableColumns, sql, count } from "drizzle-orm";
-import { kegiatans, kompetensisToKegiatans, users, usersToKegiatans } from "../db/schema";
+import { and, desc, eq, getTableColumns, sql, count, max } from "drizzle-orm";
+import { jumlahKegiatan, kegiatans, kompetensisToKegiatans, users, usersToKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 import { userTableColumns } from "./usersModels";
 import { userToKegiatanColumns } from "./penugasanModels";
@@ -44,6 +44,46 @@ export async function fetchKompetensiKegiatan(uidKegiatan: string) {
         kompetensi: temp,
         kompetensiKegiatan: undefined
     }
+}
+
+export async function fetchPeformaKegiatan(year: number) {
+    const prepared = db.select({
+        month: jumlahKegiatan.month,
+        avgJumlahKegiatan: sql<number>`avg(${jumlahKegiatan.jumlahKegiatan})`
+    })
+        .from(jumlahKegiatan)
+        .where(eq(jumlahKegiatan.year, sql.placeholder('year')))
+        .groupBy(jumlahKegiatan.month)
+        .orderBy(jumlahKegiatan.month)
+        .prepare()
+
+    let res = await prepared.execute({ year })
+    const maxAvgJumlahKegiatan = Math.max(...res.map(row => row.avgJumlahKegiatan + 3));
+    return { results: res, maxAdjustedAvg: maxAvgJumlahKegiatan }
+}
+
+export async function fetchKegiatanCountEachYear() {
+    const prepared = db.select({
+        year: sql<number>`YEAR(${kegiatans.tanggal})`,
+        count: count(kegiatans.kegiatanId)
+    })
+        .from(kegiatans)
+        .groupBy(sql<number>`YEAR(${kegiatans.tanggal})`)
+        .orderBy(sql<number>`YEAR(${kegiatans.tanggal})`)
+        .prepare()
+    const res = await prepared.execute()
+    const maxAvgJumlahKegiatan = Math.max(...res.map(row => row.count + 3));
+
+    return { results: res, maxAdjustedAvg: maxAvgJumlahKegiatan }
+}
+
+export async function fetchKegiatanCountAll() {
+    const prepared = db.select({ count: count(kegiatans.kegiatanId) })
+        .from(kegiatans)
+        .prepare()
+    const [res] = await prepared.execute()
+
+    return res.count
 }
 
 export async function fetchKegiatanByUser(uidUser: string, status?: 'ditugaskan' | 'selesai', wasLimitedTwo: boolean = false) {
@@ -182,7 +222,7 @@ export async function updateKegiatan(uidKegiatan: string, data: Partial<Kegiatan
 export async function deleteKegiatan(uidKegiatan: string) {
     const prepared = db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))).prepare()
     const [temp] = await prepared.execute({ uidKegiatan })
-    
+
     await db.delete(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
 
     return temp

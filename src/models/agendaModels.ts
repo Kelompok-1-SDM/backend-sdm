@@ -34,7 +34,12 @@ export async function fetchProgress(uidProgress: string) {
 
 // Internal only
 export async function fetchProgressAttach(hash: string) {
-    const prepared = db.select().from(progressAttachments).where(eq(progressAttachments.hash, sql.placeholder('hash'))).prepare()
+    const prepared = db.select()
+        .from(progressAttachments)
+        .where(
+            eq(progressAttachments.hash, sql.placeholder('hash'))
+        )
+        .prepare()
 
     const [res] = await prepared.execute({ hash })
     return res
@@ -140,15 +145,23 @@ export async function createProgressAgenda(dataProgress: ProgressAgendaDataType,
 }
 
 export async function createAgenda(dataAgenda: AgendaKegiatanDataType) {
-    await db.insert(agendaKegiatans).values(addTimestamps(dataAgenda))
+    await db.insert(agendaKegiatans)
+        .values(addTimestamps(dataAgenda))
 
     return await fetchAgendaByKegiatan(dataAgenda.kegiatanId)
 }
 
 export async function updateAgenda(uidAgenda: string, dataAgenda: Partial<AgendaKegiatanDataType>) {
-    const prepared = db.select({ kegiatanId: agendaKegiatans.kegiatanId }).from(agendaKegiatans).where(eq(agendaKegiatans.agendaId, sql.placeholder('uidAgenda'))).prepare()
+    const prepared = db.select({ kegiatanId: agendaKegiatans.kegiatanId })
+        .from(agendaKegiatans)
+        .where(
+            eq(agendaKegiatans.agendaId, sql.placeholder('uidAgenda'))
+        )
+        .prepare()
 
-    await db.update(agendaKegiatans).set(addTimestamps(dataAgenda, true)).where(eq(agendaKegiatans.agendaId, uidAgenda))
+    await db.update(agendaKegiatans)
+        .set(addTimestamps(dataAgenda, true))
+        .where(eq(agendaKegiatans.agendaId, uidAgenda))
 
     const [data] = await prepared.execute({ uidAgenda })
     return await fetchAgendaByKegiatan(data.kegiatanId)
@@ -156,7 +169,11 @@ export async function updateAgenda(uidAgenda: string, dataAgenda: Partial<Agenda
 
 export async function updateProgress(uidProgress: string, dataProgress: Partial<ProgressAgendaDataType>, dataAttachment?: ProgressAttachmentDataType[]) {
     await db.transaction(async (tx) => {
-        await tx.update(progressAgenda).set(addTimestamps(dataProgress, true)).where(eq(progressAgenda.progressId, uidProgress))
+        await tx.update(progressAgenda)
+            .set(addTimestamps(dataProgress, true))
+            .where(
+                eq(progressAgenda.progressId, uidProgress)
+            )
 
         if (dataAttachment) {
             for (let i = 0; i < dataAttachment.length; i += batchQuerySize) {
@@ -181,15 +198,20 @@ export async function updateProgress(uidProgress: string, dataProgress: Partial<
 
                 // Link progressId and attachmentId in progressAgendaToProgressAttachment
                 await tx.insert(progressAgendaToProgressAttachment)
-                    .values(batch.map(dat => addTimestamps({
-                        progressId: uidProgress,
-                        attachmentId: dat.attachmentId
-                    }))).onDuplicateKeyUpdate({ set: { progressId: sql`values(${progressAgendaToProgressAttachment.progressId})` } });
+                    .values(
+                        batch.map(dat => addTimestamps({
+                            progressId: uidProgress,
+                            attachmentId: dat.attachmentId
+                        })))
+                    .onDuplicateKeyUpdate({ set: { progressId: sql`values(${progressAgendaToProgressAttachment.progressId})` } });
             }
         }
     })
 
-    const prepared = db.select({ agendaId: progressAgenda.agendaId }).from(progressAgenda).where(eq(progressAgenda.progressId, sql.placeholder('uidProgress'))).prepare()
+    const prepared = db.select({ agendaId: progressAgenda.agendaId })
+        .from(progressAgenda)
+        .where(eq(progressAgenda.progressId, sql.placeholder('uidProgress')))
+        .prepare()
     const [data] = await prepared.execute({ uidProgress })
     return await fetchAgenda(data.agendaId)
 }
@@ -209,7 +231,13 @@ export async function deleteProgress(uidProgress: string) {
 }
 
 export async function deletAttachmentProgress(uidProgress: string, uidAttachment: string) {
-    await db.delete(progressAgendaToProgressAttachment).where(and(eq(progressAgendaToProgressAttachment.progressId, uidProgress), eq(progressAgendaToProgressAttachment.attachmentId, uidAttachment)))
+    await db.delete(progressAgendaToProgressAttachment)
+        .where(
+            and(
+                eq(progressAgendaToProgressAttachment.progressId, uidProgress),
+                eq(progressAgendaToProgressAttachment.attachmentId, uidAttachment)
+            )
+        )
 
     return await fetchProgress(uidProgress)
 }
