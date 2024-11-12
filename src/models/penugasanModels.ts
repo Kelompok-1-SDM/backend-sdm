@@ -15,19 +15,13 @@ export async function fetchUserRoleInKegiatan(uidKegiatan: string, uidUser: stri
 }
 
 async function fetchKegiatanWithUser(uidKegiatan: string) {
-    const prepared = db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))).prepare()
-    const [kgData] = await prepared.execute({ uidKegiatan })
-
-    const prepared1 = db.select({ ...kegiatansColumns, user: userTableColumns }).from(usersToKegiatans)
-        .rightJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
-        .rightJoin(users, eq(users.userId, usersToKegiatans.userId))
-        .where(eq(usersToKegiatans.kegiatanId, sql.placeholder('uidKegiatan'))).prepare()
-    const userData = await prepared1.execute({ uidKegiatan })
-
-    return {
-        ...kgData,
-        anggota: userData
-    }
+    const prepared = db.query.kegiatans.findFirst({
+        where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
+        with: {
+            usersKegiatans: true
+        }
+    }).prepare()
+    return await prepared.execute({ uidKegiatan })
 }
 
 

@@ -16,7 +16,7 @@ export async function homepageMobile(uidUser: string) {
     return {
         jumlahTugasBulanSekarang: jumlahBulanSkrg,
         duaTugasTerbaru: duaTugasTerbaru.kegiatan,
-        tugasBerlangsung,
+        tugasBerlangsung: tugasBerlangsung ? tugasBerlangsung : null,
         statistik: stats
     }
 }

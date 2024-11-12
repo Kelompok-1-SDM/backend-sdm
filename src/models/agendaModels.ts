@@ -15,11 +15,7 @@ export async function fetchProgress(uidProgress: string) {
     const prepared = db.query.progressAgenda.findFirst({
         where: ((progressAgenda, { eq }) => eq(progressAgenda.progressId, sql.placeholder('uidProgress'))),
         with: {
-            progressAgendaToProgressAttachment: {
-                with: {
-                    attachment: true
-                }
-            }
+            progressAgendaToProgressAttachment: true
         }
     }).prepare()
 
@@ -27,7 +23,7 @@ export async function fetchProgress(uidProgress: string) {
 
     return {
         ...res, // Keep the agendaKegiatans (agenda) data
-        attachments: res?.progressAgendaToProgressAttachment.map(pa => pa.attachment), // Extract and flatten attachments
+        attachments: res?.progressAgendaToProgressAttachment, // Extract and flatten attachments
         progressAgendaToProgressAttachment: undefined
     };
 }
@@ -65,11 +61,7 @@ export async function fetchAgenda(uidAgenda: string) {
             progress: {
                 orderBy: ((progressAgenda, { desc }) => [desc(progressAgenda.createdAt)]),
                 with: {
-                    progressAgendaToProgressAttachment: {
-                        with: {
-                            attachment: true
-                        }
-                    }
+                    progressAgendaToProgressAttachment: true
                 }
             }
         }
@@ -81,7 +73,7 @@ export async function fetchAgenda(uidAgenda: string) {
         ...res, // Keep the agendaKegiatans (agenda) data
         progress: res?.progress.map(progress => ({
             ...progress, // Keep progress data
-            attachments: progress.progressAgendaToProgressAttachment.map(pa => pa.attachment), // Extract and flatten attachments
+            attachments: progress.progressAgendaToProgressAttachment, // Extract and flatten attachments
             progressAgendaToProgressAttachment: undefined
         }))
     };
