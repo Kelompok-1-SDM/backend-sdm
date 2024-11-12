@@ -1,8 +1,6 @@
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
-import { kegiatans, users, usersToKegiatans } from "../db/schema";
+import { usersToKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
-import { userTableColumns } from "./usersModels";
-import { kegiatansColumns } from "./kegiatanModels";
 
 export const userToKegiatanColumns = getTableColumns(usersToKegiatans)
 
@@ -21,7 +19,13 @@ async function fetchKegiatanWithUser(uidKegiatan: string) {
             usersKegiatans: true
         }
     }).prepare()
-    return await prepared.execute({ uidKegiatan })
+    const dat = await prepared.execute({ uidKegiatan })
+    return {
+        ...dat,
+        user: dat?.usersKegiatans,
+
+        usersKegiatans: undefined
+    }
 }
 
 

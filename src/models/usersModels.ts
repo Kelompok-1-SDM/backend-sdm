@@ -6,31 +6,96 @@ import { kompetensisColumns } from "./kompetensiModels";
 export type UserDataType = typeof users.$inferInsert
 export type UsersToKompetensiDataType = typeof usersToKompetensis.$inferInsert
 export const { password, ...userTableColumns } = getTableColumns(users)
+export const { userId, updatedAt, createdAt, ...jumlahKegitanColumns } = getTableColumns(jumlahKegiatan)
 //TODO Improve at query peformance
 export async function fetchAllUser() {
-    return await db.select({ ...userTableColumns }).from(users).orderBy(desc(users.nama));
+    const prepared = db.query.users.findMany({
+        columns: {
+            password: false
+        },
+        with: {
+            usersKompetensi: {
+                with: {
+                    kompetensi: true  // Fetch the related 'kompetensi' data
+                }
+            }
+        }
+    }).prepare()
+
+    let dat = await prepared.execute()
+
+    // Extracting users with all their details, but only the list of 'namaKompetensi' from the 'kompetensi' relation
+    const temp = dat.map((user) => {
+        return {
+            ...user,  // Spread the rest of the user information
+            kompetensi: user.usersKompetensi.map((kompetensiJunction) =>
+                kompetensiJunction.kompetensi?.namaKompetensi  // Extract 'namaKompetensi' from the 'kompetensi' object
+            ),
+            usersKompetensi: undefined
+        }
+    })
+
+    return temp
 }
 
 export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
-    const prepared = db.select({ ...userTableColumns }).from(users).where(eq(users.role, sql.placeholder('role'))).prepare()
+    const prepared = db.query.users.findMany({
+        columns: {
+            password: false
+        },
+        with: {
+            usersKompetensi: {
+                with: {
+                    kompetensi: true  // Fetch the related 'kompetensi' data
+                }
+            }
+        },
+        where: ((uesrs, { eq }) => eq(users.role, sql.placeholder('role')))
+    }).prepare()
 
-    return await prepared.execute({ role })
+    let dat = await prepared.execute({ role })
+
+    // Extracting users with all their details, but only the list of 'namaKompetensi' from the 'kompetensi' relation
+    const temp = dat.map((user) => {
+        return {
+            ...user,  // Spread the rest of the user information
+            kompetensi: user.usersKompetensi.map((kompetensiJunction) =>
+                kompetensiJunction.kompetensi?.namaKompetensi  // Extract 'namaKompetensi' from the 'kompetensi' object
+            ),
+            usersKompetensi: undefined
+        }
+    })
+
+    return temp
 }
 
 export async function fetchUserComplete(uidUser?: string, nip?: string) {
-    const prepared = db.select({ ...userTableColumns }).from(users).where(nip ? eq(users.nip, sql.placeholder('nip')) : eq(users.userId, sql.placeholder('uidUser'))).prepare();
-    const [dataUser] = await prepared.execute(nip ? { nip } : { uidUser })
-    if (!dataUser) return
+    const prepared = db.query.users.findFirst({
+        columns: {
+            password: false
+        },
+        with: {
+            usersKompetensi: {
+                with: {
+                    kompetensi: true  // Fetch the related 'kompetensi' data
+                }
+            }
+        },
+        where: ((users, { eq }) => nip ? eq(users.nip, sql.placeholder('nip')) : eq(users.userId, sql.placeholder('uidUser')))
+    }).prepare()
 
-    const prepared1 = db.select(kompetensisColumns).from(usersToKompetensis)
-        .leftJoin(kompetensis, eq(usersToKompetensis.kompetensiId, kompetensis.kompetensiId))
-        .where(eq(usersToKompetensis.userId, sql.placeholder('uidUser'))).prepare()
-    const dataKompetensi = await prepared1.execute({ uidUser: dataUser.userId })
+    let dat = await prepared.execute(nip ? { nip } : { uidUser })
 
-    return {
-        ...dataUser,
-        kompetensi: dataKompetensi
-    }
+    // Extracting users with all their details, but only the list of 'namaKompetensi' from the 'kompetensi' relation
+    const temp = dat?.usersKompetensi ? dat!.usersKompetensi.map((kompetensi) => {
+        return kompetensi.kompetensi.namaKompetensi
+    }) : null
+
+    return dat ? {
+        ...dat,
+        kompetensi: temp,
+        usersKompetensi: undefined
+    } : undefined
 }
 
 export async function fetchUserCount(role: 'dosen' | 'manajemen') {
@@ -41,17 +106,19 @@ export async function fetchUserCount(role: 'dosen' | 'manajemen') {
 }
 
 export async function fetchUserStatistic(uidUser: string, year: number) {
-    const prepared = db.select({ ...userTableColumns }).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare();
+    const prepared = db.select({ nama: users.nama }).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare();
     const [dataUser] = await prepared.execute({ uidUser })
 
-    const prepared1 = db.select().from(jumlahKegiatan).where(year ? and(eq(jumlahKegiatan.userId, sql.placeholder('uidUser')), eq(jumlahKegiatan.year, sql.placeholder('year'))) : eq(jumlahKegiatan.userId, sql.placeholder('uidUser'))).prepare()
+    const prepared1 = db.select(jumlahKegitanColumns).from(jumlahKegiatan).where(year ? and(eq(jumlahKegiatan.userId, sql.placeholder('uidUser')), eq(jumlahKegiatan.year, sql.placeholder('year'))) : eq(jumlahKegiatan.userId, sql.placeholder('uidUser'))).prepare()
     const dataJumlahKegiatan = await prepared1.execute(year ? { uidUser, year } : { uidUser })
 
     let totalDalamSetahun: number = 0
     dataJumlahKegiatan.map((it) => totalDalamSetahun += it.jumlahKegiatan)
 
+    const firstName = dataUser.nama ? dataUser.nama.split(' ')[0] : '';
+
     return {
-        ...dataUser,
+        firstName,
         totalDalamSetahun,
         jumlahKegiatan: dataJumlahKegiatan
     }
@@ -117,7 +184,7 @@ export async function addJumlahKegiatan(uidUser: string, wasDecrement: boolean =
     const prepared = db.query.users.findFirst({
         where: ((user, { eq }) => eq(user.userId, sql.placeholder('uidUser'))),
         with: {
-            userToJumlahKegiatam: true
+            userToJumlahKegiatan: true
         }
     }).prepare()
     const data = await prepared.execute({ uidUser })
@@ -149,25 +216,5 @@ export async function deleteUserKompetensi(uidUser: string, uidKompetensi: strin
         }))
     })
 
-    const prepared = db.query.users.findFirst({
-        where: ((users, { eq }) => eq(users.userId, sql.placeholder('uidUser'))),
-        with: {
-            usersKompetensi: true
-        }
-    }).prepare()
-    const res = await prepared.execute({ uidUser })
-
-    return res
+    return await fetchUserComplete(uidUser)
 }
-
-// export async function deleteJumlahKegiatan(uidUser: string, year: number, month: number) {
-//     await db.delete(jumlahKegiatan)
-//         .where(and(eq(jumlahKegiatan.userId, uidUser), eq(jumlahKegiatan.year, year), eq(jumlahKegiatan.month, month)))
-
-//     const jmlhKgh = await db.select().from(jumlahKegiatan).where(eq(jumlahKegiatan.userId, uidUser))
-//     const user = await fetchUserByUid(uidUser)
-//     return {
-//         ...user,
-//         jumlahKegiatan: jmlhKgh
-//     }
-// }

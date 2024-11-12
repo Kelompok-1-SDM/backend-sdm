@@ -21,7 +21,14 @@ async function fetchKegiatanWithLampiran(uidKegiatan: string) {
         }
     }).prepare()
 
-    return await prepared.execute({ uidKegiatan })
+    const dat = await prepared.execute({ uidKegiatan })
+
+    return {
+        ...dat,
+        lampiran: dat?.lampiranKegiatan,
+
+        lampiranKegiatan: undefined
+    }
 }
 
 export async function createLampiran(dataLampiran: LampiranDataType[]) {

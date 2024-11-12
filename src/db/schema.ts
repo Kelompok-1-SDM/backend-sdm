@@ -23,6 +23,13 @@ export const users = mysqlTable('users', {
     }
 });
 
+export const usersRelations = relations(users, ({ many }) => ({
+    usersKegiatans: many(usersToKegiatans),
+    usersKompetensi: many(usersToKompetensis),
+    userToJumlahKegiatan: many(jumlahKegiatan),
+    passwordReset: many(resetPassword)
+}));
+
 export const resetPassword = mysqlTable('password_reset', {
     resetId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),
     userId: varchar({ length: 128 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
@@ -61,14 +68,6 @@ export const usersToKompetensisRelations = relations(usersToKompetensis, ({ one 
         fields: [usersToKompetensis.kompetensiId],
         references: [kompetensis.kompetensiId],
     }),
-}));
-
-
-export const usersRelations = relations(users, ({ many }) => ({
-    usersKegiatans: many(usersToKegiatans),
-    usersKompetensi: many(usersToKompetensis),
-    userToJumlahKegiatam: many(jumlahKegiatan),
-    passwordReset: many(resetPassword)
 }));
 
 export const kompetensis = mysqlTable('kompetensi', {

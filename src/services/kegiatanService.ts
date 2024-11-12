@@ -16,7 +16,7 @@ export async function fetchKegiatanByUser(uidUser: string, status?: 'selesai' | 
 
 export async function fetchKegiatan(uidKegiatan: string) {
     const temp = await kegiatanModels.fetchKegiatanByUid(uidKegiatan)
-    if (!temp.kegiatanId) return "kegiatan_is_not_found"
+    if (!temp) return "kegiatan_is_not_found"
 
     return temp
 }

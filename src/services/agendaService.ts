@@ -24,8 +24,6 @@ export async function fetchAgenda(uidAgenda: string) {
 }
 
 export async function createAgenda(dataAgenda: agendaModels.AgendaKegiatanDataType) {
-    const allowed = await fetchUserRoleInKegiatan(dataAgenda.kegiatanId, dataAgenda.userId)
-    if (!allowed) return "user_not_allowed"
 
     return await agendaModels.createAgenda(dataAgenda)
 }
@@ -45,9 +43,6 @@ export async function updateAgenda(uidAgenda: string, dataAgenda: agendaModels.A
 
     const ap = await agendaModels.fetchAgenda(uidAgenda)
     if (!ap) return "agenda_is_not_found"
-
-    const allowed = await fetchUserRoleInKegiatan(dataAgenda.kegiatanId, dataAgenda.userId)
-    if (!allowed) return "user_not_allowed"
 
     return await agendaModels.updateAgenda(uidAgenda, dataAgenda)
 }

@@ -46,7 +46,10 @@ export async function deletePenugasan(uidKegiatan: string, uidUser: string) {
     const apa = await penugasanModels.deletePenugasan(uidKegiatan, uidUser)
 
     const kegKomp = await kegiatanModels.fetchKegiatanByUid(uidKegiatan)
-    await usersModels.addJumlahKegiatan(uidUser, true, kegKomp.tanggal!.getFullYear(), kegKomp.tanggal!.getMonth() + 1)
+    const tahun = kegKomp?.tanggal ? kegKomp?.tanggal?.getFullYear() : 0
+    const bulan = kegKomp?.tanggal ? kegKomp?.tanggal?.getMonth() + 1 : 0
+
+    await usersModels.addJumlahKegiatan(uidUser, true, tahun, bulan)
 
     return apa
 }

@@ -51,7 +51,14 @@ export async function fetchAgendaByKegiatan(uidKegiatan: string) {
         }
     }).prepare()
 
-    return await prepared.execute({ uidKegiatan })
+    const dat = await prepared.execute({ uidKegiatan })
+
+    return {
+        ...dat,
+        agenda: dat?.agendaKegiatans,
+
+        agendaKegiatans: undefined
+    }
 }
 
 export async function fetchAgenda(uidAgenda: string) {

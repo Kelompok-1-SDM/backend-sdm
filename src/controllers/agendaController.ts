@@ -90,14 +90,7 @@ export async function createAgenda(req: Request, res: Response) {
 
     try {
         const data = await agendaServices.createAgenda({ kegiatanId: (uidKegiatan as string), userId: userUid, jadwalAgenda, namaAgenda, deskripsiAgenda, status })
-        if (data === 'user_not_allowed') {
-            res.status(401).json(createResponse(
-                false,
-                null,
-                "User is not registered on this kegiatan"
-            ))
-            return
-        }
+
         res.status(200).json(createResponse(
             true,
             data,
@@ -230,14 +223,7 @@ export async function updateAgenda(req: Request, res: Response) {
 
     try {
         const data = await agendaServices.updateAgenda(uidAgenda as string, { kegiatanId: (uidKegiatan as string), userId: userUid, jadwalAgenda, namaAgenda, deskripsiAgenda, status })
-        if (data === 'user_not_allowed') {
-            res.status(401).json(createResponse(
-                false,
-                null,
-                "User is not registered on this kegiatan"
-            ))
-            return
-        }
+
         res.status(200).json(createResponse(
             true,
             data,
