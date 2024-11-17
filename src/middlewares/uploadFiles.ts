@@ -99,3 +99,44 @@ export const handleFileUploadArray = (req: Request, res: Response, next: NextFun
         next();
     });
 };
+
+const uploadSingleFileExcel = multer({
+    limits: { fileSize: 1024 * 1024 * 10 }, // Limit file size to 10MB
+    fileFilter: (req: Request, file, cb) => {
+        if (['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'].includes(file.mimetype)) {
+            cb(null, true); // Accept file
+        } else {
+            const error = new Error('Invalid file type. Only documents (JPG, JPEG, PNG, GIF, SVG, BMP, WEBP) are allowed.');
+            cb(error); // Reject file with error
+        }
+    }
+}).single('file'); // Only expect a single file upload with field name 'lampiran'
+
+/**
+ * Middleware to handle file upload.
+ */
+export const uploadFileExcel = (req: Request<ParamsDictionary, any, any, ParsedQs>, res: Response, next: NextFunction) => {
+
+    uploadSingleFileExcel(req as Request, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            // Multer-specific error
+            res.status(400).json(createResponse(
+                false,
+                null,
+                `Multer error: ${err.message}`,
+            ))
+            return
+        } else if (err) {
+            // General error (e.g., invalid file type)
+            res.status(400).json(createResponse(
+                false,
+                null,
+                `Upload error: ${err.message}`,
+            ))
+            return
+        }
+
+        // Proceed to the next middleware or controller if no errors
+        next();
+    });
+};

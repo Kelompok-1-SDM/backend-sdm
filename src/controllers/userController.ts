@@ -230,7 +230,7 @@ export async function createUser(req: Request, res: Response) {
         ));
     } catch (err) {
         if (err instanceof Error) {
-             if (err.message.toLowerCase().includes('duplicate')) {
+            if (err.message.toLowerCase().includes('duplicate')) {
                 res.status(422).json(createResponse(
                     false,
                     undefined,
@@ -245,6 +245,88 @@ export async function createUser(req: Request, res: Response) {
                 ))
                 return
             }
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            null,
+            "Mbuh mas"
+        ))
+    }
+};
+
+export async function createUserBatch(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    const { role } = req.query
+    const file = req.file as Express.Multer.File;
+
+    try {
+        await userService.importUser(file, role as "admin" | "manajemen" | "dosen")
+        res.status(200).json(createResponse(
+            true,
+            null,
+            "OK"
+        ));
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            null,
+            "Mbuh mas"
+        ))
+    }
+};
+
+export async function exportUserBatch(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    const { role } = req.query
+
+    try {
+        const data = await userService.exportExcelService(role as "admin" | "manajemen" | "dosen")
+
+        res.setHeader("Content-Disposition", "attachment; filename=data.xlsx");
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+        // Send the Excel file
+        res.send(data);
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
         }
 
         console.log(err)

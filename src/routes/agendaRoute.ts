@@ -6,14 +6,12 @@ import { handleFileUploadArray } from '../middlewares/uploadFiles';
 
 const router = express.Router();
 
-router.get('/',
-    [authorize(['admin', 'manajemen', 'dosen']),
+router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().toLowerCase().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty"),
-    ], agendaController.fetchAgenda)
+], agendaController.fetchAgenda)
 
-router.post('/',
-    [authorize(['admin', 'manajemen', 'dosen']),
+router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid_kegiatan').isString().trim().withMessage('This key is required and is string'),
     query('uid_kegiatan').notEmpty().withMessage("This key should be not empty"),
     body('uid_user').isString().trim().withMessage('This key is optional and is string'),
@@ -26,19 +24,16 @@ router.post('/',
     body('deskripsi_agenda').notEmpty().withMessage("This key should be not empty"),
     body('status').isIn(['rencana', 'jalan', 'selesai']).trim().withMessage("Status are 'rencana', 'jalan', 'selesai'"),
     body('status').notEmpty().withMessage("This key should be not empty"),
-    ], agendaController.createAgenda)
+], agendaController.createAgenda)
 
-router.post('/progress',
-    [authorize(['admin', 'manajemen', 'dosen']),
-        handleFileUploadArray,
+router.post('/progress', authorize(['admin', 'manajemen', 'dosen']), handleFileUploadArray, [
     query('uid_agenda').isString().trim().withMessage('This key is required and is string'),
     query('uid_agenda').notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_progress').isString().trim().withMessage('This key is required and is string'),
     body('deskripsi_progress').notEmpty().withMessage("This key should be not empty"),
-    ], agendaController.createProgressAgenda)
+], agendaController.createProgressAgenda)
 
-router.put('/',
-    [authorize(['admin', 'manajemen', 'dosen']),
+router.put('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty"),
     body('uid_user').isString().optional().trim().withMessage('This key is optional and is string'),
@@ -50,38 +45,33 @@ router.put('/',
     body('deskripsi_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('status').isIn(['rencana', 'jalan', 'selesai']).optional().trim().withMessage("List tugaskan(role) are 'rencana', 'jalan', 'selesai'"),
     body('status').optional().notEmpty().withMessage("This key should be not empty"),
-    ], agendaController.updateAgenda)
+], agendaController.updateAgenda)
 
 
-router.put('/progress',
-    [authorize(['admin', 'manajemen', 'dosen']),
-        handleFileUploadArray,
+router.put('/progress', authorize(['admin', 'manajemen', 'dosen']), handleFileUploadArray, [
     query('uid').isString().trim().withMessage('This key is optional and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty"),
     body('uid_agenda').isString().optional().trim().withMessage('This key is optional and is string'),
     body('uid_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_progress').isString().optional().trim().withMessage('This key is optional and is string'),
     body('deskripsi_progress').optional().notEmpty().withMessage("This key should be not empty"),
-    ], agendaController.updateProgressAgenda)
+], agendaController.updateProgressAgenda)
 
-router.delete('/',
-    [authorize(['admin', 'manajemen', 'dosen']),
+router.delete('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty")
-    ], agendaController.deleteAgenda)
+], agendaController.deleteAgenda)
 
-router.delete('/progress',
-    [authorize(['admin', 'manajemen', 'dosen']),
+router.delete('/progress', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty")
-    ], agendaController.deleteProgressAgenda)
+], agendaController.deleteProgressAgenda)
 
-router.delete('/progress-attachment',
-    [authorize(['admin', 'manajemen', 'dosen']),
+router.delete('/progress-attachment', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty"),
     query('uid_attachment').isString().trim().withMessage('This key is required and is string'),
     query('uid_attachment').notEmpty().withMessage("This key should be not empty")
-    ], agendaController.deleteAttachmentProgress)
+], agendaController.deleteAttachmentProgress)
 
 export default router;

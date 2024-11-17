@@ -28,7 +28,7 @@ export const usersRelations = relations(users, ({ many }) => ({
     usersKompetensi: many(usersToKompetensis),
     userToJumlahKegiatan: many(jumlahKegiatan),
     passwordReset: many(resetPassword)
-}));
+}));``
 
 export const resetPassword = mysqlTable('password_reset', {
     resetId: varchar({ length: 128 }).$defaultFn(() => createId()).primaryKey(),

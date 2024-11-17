@@ -14,17 +14,21 @@ export const livechatRoutes = (io: Server, socket: Socket) => {
 
 const router = express.Router();
 
-router.get('/history',
-    [authorize(['admin', 'manajemen', 'dosen']),
+router.get('/history', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid_room').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
     query('uid_room').notEmpty().withMessage("This key should not be empty")
-    ], livechatController.fetchMessageHistory
+], livechatController.fetchMessageHistory
 )
 
-router.post('/',
-    [authorize(['admin', 'manajemen', 'dosen']),
-        handleFileUploadArray,
-    ], livechatController.uploadMessageAttachment
+router.get('/latest', authorize(['admin', 'manajemen', 'dosen']), [
+    query('uid_room').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
+    query('uid_room').notEmpty().withMessage("This key should not be empty")
+], livechatController.fetchLatestMessage
+)
+
+router.post('/', authorize(['admin', 'manajemen', 'dosen']),
+    handleFileUploadArray,
+    livechatController.uploadMessageAttachment
 )
 
 export default router

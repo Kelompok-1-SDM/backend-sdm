@@ -1,7 +1,6 @@
 import { addTimestamps, db } from "./utilsModel";
-import { jumlahKegiatan, kompetensis, users, usersToKompetensis } from "../db/schema";
-import { and, desc, eq, getTableColumns, sql, count } from "drizzle-orm";
-import { kompetensisColumns } from "./kompetensiModels";
+import { jumlahKegiatan, users, usersToKompetensis } from "../db/schema";
+import { and, eq, getTableColumns, sql, count } from "drizzle-orm";
 
 export type UserDataType = typeof users.$inferInsert
 export type UsersToKompetensiDataType = typeof usersToKompetensis.$inferInsert
@@ -50,7 +49,7 @@ export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
                 }
             }
         },
-        where: ((uesrs, { eq }) => eq(users.role, sql.placeholder('role')))
+        where: ((users, { eq }) => eq(users.role, sql.placeholder('role')))
     }).prepare()
 
     let dat = await prepared.execute({ role })
@@ -150,6 +149,14 @@ export async function createUser(data: UserDataType) {
     }
 }
 
+export async function createBatchUser(data: UserDataType[]) {
+    await db.insert(users).values(addTimestamps(data)).onDuplicateKeyUpdate({
+        set: {
+            userId: sql`values(${users.userId})`
+        }
+    })
+}
+
 export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]) {
     const data: UsersToKompetensiDataType[] = uidKompetensi.map((it) => {
         return addTimestamps({
@@ -198,6 +205,10 @@ export async function updateUser(uidUser: string, data: Partial<UserDataType>) {
     const prepared = db.select({ ...userTableColumns }).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare()
     const [res] = await prepared.execute({ uidUser })
     return res
+}
+
+export async function updateUserPassword(userId: string, newPassword: string) {
+    await db.update(users).set({ password: newPassword }).where(eq(users.userId, userId)).execute();
 }
 
 export async function deleteUser(uidUser: string) {

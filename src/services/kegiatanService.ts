@@ -6,8 +6,8 @@ export async function fetchAllKegiatan() {
     return await kegiatanModels.fetchAllKegiatan()
 }
 
-export async function fetchKegiatanByUser(uidUser: string, status?: 'selesai' | 'ditugaskan') {
-    const temp = await kegiatanModels.fetchKegiatanByUser(uidUser, status, undefined)
+export async function fetchKegiatanByUser(uidUser: string, status?: 'selesai' | 'ditugaskan', tanggal?: string,) {
+    const temp = await kegiatanModels.fetchKegiatanByUser(uidUser, status, tanggal, undefined)
     if (!temp.userId) return "user_is_not_found"
     if (temp.kegiatan.length === 0) return "kegiatan_is_not_found"
 

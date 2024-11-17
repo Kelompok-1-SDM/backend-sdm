@@ -5,18 +5,17 @@ import { authorize } from '../middlewares/authorizations';
 
 const router = express.Router();
 
-router.get('/',
-    [
-        authorize(['admin', 'manajemen', 'dosen']),
-        query('uid').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
-        query('uid').optional().notEmpty().withMessage("This key should not be empty"),
-        query('uid_user').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
-        query('status').isIn(['selesai', 'ditugaskan']).trim().optional().toLowerCase().withMessage("Status are 'selesai', 'ditugaskan'"),
-        query('status').optional().notEmpty().withMessage("This key should not be empty"),
-    ], kegiatanController.fetchKegiatan)
+router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
+    query('uid').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
+    query('uid').optional().notEmpty().withMessage("This key should not be empty"),
+    query('uid_user').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
+    query('status').isIn(['selesai', 'ditugaskan']).trim().optional().toLowerCase().withMessage("Status are 'selesai', 'ditugaskan'"),
+    query('status').optional().notEmpty().withMessage("This key should not be empty"),
+    query('tanggal').isISO8601().optional().trim().toDate().withMessage('This key is required and is ISO8601'),
+    query('tanggal').optional().notEmpty().withMessage("This key should not be empty"),
+], kegiatanController.fetchKegiatan)
 
-router.post('/',
-    [authorize(['admin', 'manajemen']),
+router.post('/', authorize(['admin', 'manajemen']), [
     body('judul_kegiatan').isString().trim().withMessage("This key is required and it's string"),
     body('judul_kegiatan').notEmpty().withMessage("This key should not be empty"),
     body('tipe_kegiatan').isIn(['jti', 'non-jti']).toLowerCase().trim().withMessage("Tipe kegiatan are 'jti', 'non-jti'"),
@@ -31,10 +30,9 @@ router.post('/',
     body('list_kompetensi').notEmpty().withMessage("This key should not be empty"),
     body('list_kompetensi.*').isString().trim().withMessage('List kompetensi(element) must be an string'),
     body('list_kompetensi.*').notEmpty().withMessage("This key should not be empty")
-    ], kegiatanController.createKegiatan)
+], kegiatanController.createKegiatan)
 
-router.put('/',
-    [authorize(['admin', 'manajemen']),
+router.put('/', authorize(['admin', 'manajemen']), [
     query('uid').isString().trim().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
     body('judul_kegiatan').isString().optional().trim().withMessage("This key is required and it's string"),
@@ -51,13 +49,12 @@ router.put('/',
     body('list_kompetensi').optional().notEmpty().withMessage("This key should not be empty"),
     body('list_kompetensi.*').isString().optional().trim().withMessage('List kompetensi(element) must be an string'),
     body('list_kompetensi.*').optional().notEmpty().withMessage("This key should not be empty")
-    ], kegiatanController.updateKegiatan)
+], kegiatanController.updateKegiatan)
 
-router.delete('/',
-    [authorize(['admin', 'manajemen']),
+router.delete('/', authorize(['admin', 'manajemen']), [
     query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
-    ], kegiatanController.deleteKegiatan)
+], kegiatanController.deleteKegiatan)
 
 
 export default router;

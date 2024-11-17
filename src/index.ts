@@ -25,7 +25,6 @@ import cors from 'cors';
 
 import { livechatRoutes } from './routes/livechatRoute';
 import { socketAuth } from './middlewares/authorizations';
-import { createResponse } from './utils/utils';
 
 const app = express()
 const server = createServer(app);

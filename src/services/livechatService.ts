@@ -34,6 +34,7 @@ export async function sendMessage(uidRoom: string, uidUser: string, message: str
     };
 }
 
+//TODO check this
 export async function editMessage(messageId: string, message: string) {
     const updatedMessage = await Message.findByIdAndUpdate(messageId, addTimestamps({ message }, true), { new: true });
     return {
@@ -89,4 +90,30 @@ export async function fetchMessageHistory(uidroom: string) {
     })
 
     return messages
+}
+
+export async function fetchLatestMessageFromChat(uidRoom: string) {
+    // Check if the room exists
+    const chatRoom = await ChatRoom.findOne({ roomId: uidRoom });
+    if (!chatRoom) return "room_not_found";
+
+    // Fetch the latest message with attachments
+    const latestMessage = await Message.findOne({ roomId: uidRoom, attachments: { $exists: true, $not: { $size: 0 } } })
+        .sort({ createdAt: -1 }); // Sort by newest first
+
+    if (!latestMessage) return "no_message_with_attachments";
+
+    // Map and return the message structure
+    return {
+        uidRoom: latestMessage.roomId,
+        uidUser: latestMessage.senderId,
+
+        roomId: undefined,
+        senderId: undefined,
+
+        message: latestMessage.message,
+        createdAt: latestMessage.createdAt,
+        updatedAt: latestMessage.updatedAt,
+        attachments: latestMessage.attachments, // Include attachments in the response
+    };
 }

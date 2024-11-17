@@ -2,14 +2,14 @@ import { UserDataType } from "../models/usersModels";
 import { hashPassword } from "../utils/utils";
 import * as usersModels from "../models/usersModels";
 import * as kegiatanModels from "../models/kegiatanModels"
-import { calculateFileHash, uploadFileToCdn } from "./utilsService";
+import { calculateFileHash, exportExcel, parseExcel, uploadFileToCdn } from "./utilsService";
 
 export async function homepageMobile(uidUser: string) {
     const temp = await usersModels.fetchUserByUid(uidUser)
     if (!temp) return "user_is_not_found"
 
     const jumlahBulanSkrg = await kegiatanModels.fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser, new Date().getMonth() + 1)
-    const duaTugasTerbaru = await kegiatanModels.fetchKegiatanByUser(uidUser, "ditugaskan", true)
+    const duaTugasTerbaru = await kegiatanModels.fetchKegiatanByUser(uidUser, "ditugaskan", undefined, true)
     const tugasBerlangsung = await kegiatanModels.fetchUserCurrentKegiatan(uidUser, new Date())
     const stats = await statistic(uidUser)
 
@@ -51,6 +51,18 @@ export async function fetchAllUsers() {
     return await usersModels.fetchAllUser()
 }
 
+export async function exportExcelService(role: 'admin' | 'manajemen' | 'dosen') {
+    const data = await fetchUserByRole(role)
+
+    return exportExcel(data.map((it) => {
+        return {
+            nip: it.nip,
+            nama: it.nama,
+            email: it.email
+        }
+    }))
+}
+
 export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
     return await usersModels.fetchUserByRole(role)
 }
@@ -60,6 +72,19 @@ export async function fetchUser(uid?: string, nip?: string) {
     if (!res) return "user_is_not_found"
 
     return res
+}
+
+export async function importUser(file: Express.Multer.File, role: 'admin' | 'manajemen' | 'dosen') {
+    const parsedExcel = await parseExcel(file, role)
+    const apalah: UserDataType[] = await Promise.all(parsedExcel.map(async (it) => {
+        const ap = await hashPassword(String(it.nip))
+        return {
+            ...it,
+            password: ap,
+            role
+        }
+    }))
+    await usersModels.createBatchUser(apalah)
 }
 
 export async function createUser(data: UserDataType, file?: Express.Multer.File) {

@@ -186,3 +186,69 @@ export async function fetchMessageHistory(req: Request, res: Response) {
         ))
     }
 }
+
+export async function fetchLatestMessage(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    const { uid_room: uidRoom } = req.query
+
+    const allowed = await livechatServices.isUserInRoom(uidRoom as string, req.user?.userId as string)
+    if (!allowed) {
+        res.status(401).json(createResponse(
+            false,
+            null,
+            "Youre not allowed to access this room"
+        ))
+        return
+    }
+
+    try {
+        const data = await livechatServices.fetchLatestMessageFromChat(uidRoom as string)
+        if (data === 'room_not_found') {
+            res.status(404).json(createResponse(
+                false,
+                null,
+                "Room or Kegiatan was not found"
+            ))
+            return
+        } else if (data === 'no_message_with_attachments') {
+            res.status(404).json(createResponse(
+                false,
+                null,
+                "No message with attachment"
+            ))
+            return
+        }
+        
+        res.status(200).json(createResponse(
+            true,
+            data,
+            "OK"
+        ));
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            null,
+            "Mbuh mas"
+        ))
+    }
+}

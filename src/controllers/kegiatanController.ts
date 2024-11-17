@@ -16,7 +16,7 @@ export async function fetchKegiatan(req: Request, res: Response) {
         return
     }
 
-    let { uid_user: uidUser, uid: uidKegiatan, status } = req.query
+    let { uid_user: uidUser, uid: uidKegiatan, status, tanggal } = req.query
     let data: any
 
     if (uidUser === "") {
@@ -25,8 +25,8 @@ export async function fetchKegiatan(req: Request, res: Response) {
 
     try {
         if (uidUser) {
-            if (status) {
-                data = await kegiatanService.fetchKegiatanByUser(uidUser as string, status as 'selesai' | 'ditugaskan')
+            if (status || tanggal) {
+                data = await kegiatanService.fetchKegiatanByUser(uidUser as string, status as 'selesai' | 'ditugaskan', tanggal as string)
             }
             else {
                 data = await kegiatanService.fetchKegiatanByUser(uidUser as string)
