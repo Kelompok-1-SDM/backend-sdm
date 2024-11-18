@@ -228,6 +228,8 @@ export async function fetchKegiatanByUid(uidKegiatan: string) {
 
     if (!kegiatan) return undefined
 
+    const prepared2 = db.select(userTableColumns).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare()
+
     const prepared3 = db
         .select({
             namaKompetensi: kompetensis.namaKompetensi
@@ -238,12 +240,15 @@ export async function fetchKegiatanByUid(uidKegiatan: string) {
         .limit(3)
         .prepare();
 
-    kegiatan.usersKegiatans = await Promise.all(kegiatan.usersKegiatans.map(async (it) => {
+    const apa = await Promise.all(kegiatan.usersKegiatans.map(async (it) => {
         const kompetensiData = await prepared3.execute({ uidUser: it.userId });
+        const [user] = await prepared2.execute({ uidUser: it.userId })
         const kompetensiNames = kompetensiData.map((komp) => komp.namaKompetensi);
 
         return {
-            ...it,
+            ...user,
+            roleKegiatan: it.roleKegiatan,
+            status: it.status,
             kompetensi: kompetensiNames
         };
     }));
@@ -257,7 +262,7 @@ export async function fetchKegiatanByUid(uidKegiatan: string) {
         kompetensi: kompe, // Rename kompetensiKegiatan to kompetensi and keep only namaKompetensi
         lampiran: kegiatan.lampiranKegiatan, // Keep lampiranKegiatan as lampiran
         agenda: kegiatan.agendaKegiatans, // Keep agendaKegiatans as agenda
-        user: kegiatan.usersKegiatans,
+        user: apa,
 
         kompetensiKegiatan: undefined, // Remove kompetensiKegiatan from the result
         lampiranKegiatan: undefined,
