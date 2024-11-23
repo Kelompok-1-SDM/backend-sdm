@@ -52,7 +52,8 @@ export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitug
             return addTimestamps({
                 kegiatanId: uidKegiatan,
                 userId: user.uid_user,
-                roleKegiatan: user.role
+                roleKegiatan: user.role,
+                status: user.status
             })
         })
         await db.insert(usersToKegiatans).values(batch!).onDuplicateKeyUpdate({
