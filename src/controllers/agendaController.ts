@@ -65,7 +65,7 @@ export async function createAgenda(req: Request, res: Response) {
     }
 
     const { uid_kegiatan: uidKegiatan } = req.query
-    let { jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status, list_uid_user_kegiatan: listUserKegiatan } = req.body
+    let { jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, is_done: isDone, list_uid_user_kegiatan: listUserKegiatan } = req.body
 
     if (req.user?.role === 'dosen') {
         const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
@@ -89,7 +89,7 @@ export async function createAgenda(req: Request, res: Response) {
     }
 
     try {
-        const data = await agendaServices.createAgenda({ kegiatanId: (uidKegiatan as string), jadwalAgenda, namaAgenda, deskripsiAgenda, status }, listUserKegiatan)
+        const data = await agendaServices.createAgenda({ kegiatanId: (uidKegiatan as string), jadwalAgenda, namaAgenda, deskripsiAgenda, isDone }, listUserKegiatan)
 
         res.status(200).json(createResponse(
             true,
@@ -203,7 +203,7 @@ export async function updateAgenda(req: Request, res: Response) {
     }
 
     const { uid: uidAgenda } = req.query
-    let { kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status, list_user_kegiatan: listUserKegiatan } = req.body
+    let { kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, is_done: isDone, list_user_kegiatan: listUserKegiatan } = req.body
 
 
     if (req.user?.role === 'dosen') {
@@ -219,7 +219,7 @@ export async function updateAgenda(req: Request, res: Response) {
     }
 
     try {
-        const data = await agendaServices.updateAgenda(uidAgenda as string, { kegiatanId: (uidKegiatan as string), jadwalAgenda, namaAgenda, deskripsiAgenda, status }, listUserKegiatan)
+        const data = await agendaServices.updateAgenda(uidAgenda as string, { kegiatanId: (uidKegiatan as string), jadwalAgenda, namaAgenda, deskripsiAgenda, isDone }, listUserKegiatan)
 
         res.status(200).json(createResponse(
             true,

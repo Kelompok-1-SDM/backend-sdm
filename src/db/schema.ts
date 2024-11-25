@@ -241,7 +241,7 @@ export const agendaKegiatans = mysqlTable('agenda_kegiatan', {
     jadwalAgenda: datetime().notNull(),
     namaAgenda: varchar({ length: 255 }).notNull(),
     deskripsiAgenda: text(),
-    status: mysqlEnum(['rencana', 'jalan', 'selesai']),
+    isDone: boolean().default(false),
 
     ...timestampsHelper
 }, (table) => {

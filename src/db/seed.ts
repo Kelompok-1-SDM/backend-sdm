@@ -212,6 +212,9 @@ const seedUsersToKegiatans = async () => {
     const jabatanRecords = await db.select().from(jabatanAnggota);
 
     for (const user of userRecords) {
+        if (user.role != 'dosen') {
+            continue
+        }
         // Randomize the number of kegiatans to assign to this user
         const kegiatanCount = faker.number.int({ min: 1, max: kegiatanRecords.length });
         const assignedKegiatans = new Set();
@@ -356,7 +359,7 @@ const seedAgendaKegiatans = async () => {
                 jadwalAgenda: faker.date.future(),
                 namaAgenda: faker.lorem.sentence(),
                 deskripsiAgenda: faker.lorem.paragraph(),
-                status: faker.helpers.arrayElement(['rencana', 'jalan', 'selesai']),
+                isDone: faker.datatype.boolean(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
             });

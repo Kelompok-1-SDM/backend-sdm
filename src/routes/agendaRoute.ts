@@ -20,8 +20,8 @@ router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
     body('nama_agenda').notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_agenda').isString().trim().withMessage('This key is required and is string'),
     body('deskripsi_agenda').notEmpty().withMessage("This key should be not empty"),
-    body('status').isIn(['rencana', 'jalan', 'selesai']).trim().withMessage("Status are 'rencana', 'jalan', 'selesai'"),
-    body('status').notEmpty().withMessage("This key should be not empty"),
+    body('is_done').isBoolean().toBoolean().withMessage("is_done are 'rencana', 'jalan', 'selesai'"),
+    body('is_done').notEmpty().withMessage("This key should be not empty"),
     body('list_uid_user_kegiatan')
         .isArray().optional().withMessage('List user ditugaskan must be an array')
         .bail()
@@ -48,8 +48,8 @@ router.put('/', authorize(['admin', 'manajemen', 'dosen']), [
     body('nama_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_agenda').isString().optional().trim().withMessage('This key is optional and is string'),
     body('deskripsi_agenda').optional().notEmpty().withMessage("This key should be not empty"),
-    body('status').isIn(['rencana', 'jalan', 'selesai']).optional().trim().withMessage("List tugaskan(role) are 'rencana', 'jalan', 'selesai'"),
-    body('status').optional().notEmpty().withMessage("This key should be not empty"),
+    body('is_done').isBoolean().optional().toBoolean().withMessage("List tugaskan(role) are 'rencana', 'jalan', 'selesai'"),
+    body('is_done').optional().notEmpty().withMessage("This key should be not empty"),
     body('list_uid_user_kegiatan')
         .isArray().optional().withMessage('List user ditugaskan must be an array')
         .bail()

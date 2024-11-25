@@ -9,8 +9,8 @@ router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
     query('uid').optional().notEmpty().withMessage("This key should not be empty"),
     query('uid_user').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
-    query('isDone').isBoolean().optional().withMessage("Status is optional and its boolean"),
-    query('isDone').optional().notEmpty().withMessage("This key should not be empty"),
+    query('is_done').isBoolean().optional().withMessage("is_done is optional and its boolean"),
+    query('is_done').optional().notEmpty().withMessage("This key should not be empty"),
     query('tanggal').isISO8601().optional().trim().toDate().withMessage('This key is required and is ISO8601'),
     query('tanggal').optional().notEmpty().withMessage("This key should not be empty"),
 ], kegiatanController.fetchKegiatan)

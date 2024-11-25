@@ -16,7 +16,7 @@ export async function fetchKegiatan(req: Request, res: Response) {
         return
     }
 
-    let { uid_user: uidUser, uid: uidKegiatan, isDone, tanggal } = req.query
+    let { uid_user: uidUser, uid: uidKegiatan, is_done: isDone, tanggal } = req.query
     let data: any
 
     if (uidUser === "") {
