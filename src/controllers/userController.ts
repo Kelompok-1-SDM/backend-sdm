@@ -407,7 +407,7 @@ export async function updateUser(req: Request, res: Response) {
         return
     }
 
-    const { nip, password, nama, role } = req.body
+    const { nip, password, nama, role, email } = req.body
     let { uid: uidUser } = req.query
     const file = req.file as Express.Multer.File;
 
@@ -425,7 +425,7 @@ export async function updateUser(req: Request, res: Response) {
     }
 
     try {
-        const data = await userService.updateUser(uidUser as string, { nip, password, nama, role, }, file)
+        const data = await userService.updateUser(uidUser as string, { nip, password, email, nama, role, }, file)
 
         if (data === "user_is_not_found") {
             res.status(404).json(createResponse(false, null, "User not found"))
