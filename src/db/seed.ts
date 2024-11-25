@@ -173,6 +173,9 @@ const seedUsersToKompetensis = async () => {
 
     for (const user of userRecords) {
         // Randomize the number of kompetensis to assign to this user
+        if (user.role != 'dosen') {
+            continue
+        }
         const kompetensiCount = faker.number.int({ min: 1, max: 20 });
         const assignedKompetensis = new Set();
 
