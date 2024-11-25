@@ -2,15 +2,16 @@ import mysql from "mysql2/promise";
 import * as schema from '../db/schema'
 import { drizzle } from 'drizzle-orm/mysql2';
 import { dbCredentials } from "../../drizzle.config";
+import { sql } from "drizzle-orm";
 
 const poolConnection = mysql.createPool(dbCredentials);
 export const batchQuerySize = 10
-export const db = drizzle({ client: poolConnection, casing: 'snake_case', logger: true, schema, mode: 'default' });
+export const db = drizzle({ client: poolConnection, casing: 'snake_case', schema, mode: 'default' });
 
 //TODO Improve at query peformance
 // Example timestamp wrapper function
 export function addTimestamps(data: any, isUpdate = false) {
-    const timestamp = new Date();
+    const timestamp = sql`CURRENT_TIMESTAMP`;
 
     if (Array.isArray(data)) {
         return data.map(it => {

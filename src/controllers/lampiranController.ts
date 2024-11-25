@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { createResponse } from "../utils/utils";
 import * as lampiranServices from '../services/lampiranService'
-import { fetchUserRoleInKegiatan } from '../models/penugasanModels'
+import { fetchUserJabatanInKegiatan } from '../models/penugasanModels'
 import { fetchLampiranByUid } from '../models/lampiranModels'
 
 export async function createLampiran(req: Request, res: Response) {
@@ -30,7 +30,7 @@ export async function createLampiran(req: Request, res: Response) {
     }
 
     if (req.user?.role === 'dosen') {
-        const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
+        const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(
                 false,
@@ -40,7 +40,7 @@ export async function createLampiran(req: Request, res: Response) {
             return
         }
 
-        if (wasAllowed.role == 'anggota') {
+        if (!wasAllowed.isPic) {
             res.status(401).json(createResponse(
                 false,
                 null,
@@ -101,7 +101,7 @@ export async function deleteLampiran(req: Request, res: Response) {
 
     if (req.user?.role === 'dosen') {
         const lampiran = await fetchLampiranByUid(uidLampiran as string)
-        const wasAllowed = await fetchUserRoleInKegiatan(lampiran.kegiatanId as string, req.user!.userId as string)
+        const wasAllowed = await fetchUserJabatanInKegiatan(lampiran.kegiatanId as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(
                 false,
@@ -111,7 +111,7 @@ export async function deleteLampiran(req: Request, res: Response) {
             return
         }
 
-        if (wasAllowed.role == 'anggota') {
+        if (!wasAllowed.isPic) {
             res.status(401).json(createResponse(
                 false,
                 null,

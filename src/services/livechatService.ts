@@ -95,7 +95,7 @@ export async function fetchMessageHistory(uidroom: string) {
 export async function fetchLatestMessageFromChat(uidRoom: string) {
     // Check if the room exists
     const chatRoom = await ChatRoom.findOne({ roomId: uidRoom });
-    if (!chatRoom) return "room_not_found";
+    if (chatRoom) return "room_not_found";
 
     // Fetch the latest message with attachments
     const latestMessage = await Message.findOne({ roomId: uidRoom, attachments: { $exists: true, $not: { $size: 0 } } })

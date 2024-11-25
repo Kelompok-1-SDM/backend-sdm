@@ -2,7 +2,9 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import {
     users, kompetensis, kegiatans, usersToKompetensis, usersToKegiatans,
     jumlahKegiatan, lampiranKegiatans, agendaKegiatans, kompetensisToKegiatans,
-    progressAgenda, progressAttachments, progressAgendaToProgressAttachment
+    progressAgenda, progressAttachments, progressAgendaToProgressAttachment,
+    jabatanAnggota,
+    agendaToUsersKegiatans
 } from './schema';
 import { faker } from '@faker-js/faker';
 import mysql from "mysql2/promise";
@@ -13,9 +15,11 @@ import { and, eq, sql } from 'drizzle-orm';
 import * as xlsx from 'xlsx';
 import { hashPassword } from '../utils/utils';
 import mongoose from 'mongoose';
-import { ChatRoom } from '../models/livechatModels';
+import { ChatRoom, Message } from '../models/livechatModels';
+import { init } from '@paralleldrive/cuid2';
 
 const poolConnection = mysql.createPool(dbCredentials);
+const createId = init({ length: 24, fingerprint: process.env.CUID_FINGERPINT });
 
 const db = drizzle({ client: poolConnection, casing: 'snake_case' });
 
@@ -102,15 +106,27 @@ const seedKompetensis = async () => {
     console.log(`Seeded ${kompetensiSeeds.length} kompetensis`);
 };
 
+// Seed for 'jabatan' table
+const seedJabatan = async () => {
+    const jabatanSeeds = Array.from({ length: 5 }).map(() => ({
+        namaJabatan: faker.lorem.words(1),
+        isPic: faker.helpers.arrayElement([true, false])
+    }));
+
+    await db.insert(jabatanAnggota).values(jabatanSeeds)
+    console.log(`Seeded ${jabatanSeeds.length} jabatan`)
+}
+
 // Seed for 'kegiatans' table
 const seedKegiatans = async () => {
     // Seed 20 kegiatan records
     const kegiatanSeeds = Array.from({ length: 20 }).map(() => ({
-        judulKegiatan: faker.lorem.sentence(),
-        tanggal: faker.date.past(),
-        lokasi: faker.location.city(),
-        tipe_kegiatan: faker.helpers.arrayElement(['jti', 'non-jti']),
+        judul: faker.lorem.sentence(),
+        tanggalMulai: faker.date.past(),
+        tanggalAkhir: faker.date.soon(),
+        tipeKegiatan: faker.helpers.arrayElement(['jti', 'non-jti']),
         deskripsi: faker.lorem.paragraph(),
+        lokasi: faker.location.city(),
         createdAt: new Date(),
         updatedAt: new Date(),
     }));
@@ -193,6 +209,7 @@ const seedUsersToKompetensis = async () => {
 const seedUsersToKegiatans = async () => {
     const userRecords = await db.select().from(users);
     const kegiatanRecords = await db.select().from(kegiatans);
+    const jabatanRecords = await db.select().from(jabatanAnggota);
 
     for (const user of userRecords) {
         // Randomize the number of kegiatans to assign to this user
@@ -201,6 +218,7 @@ const seedUsersToKegiatans = async () => {
 
         while (assignedKegiatans.size < kegiatanCount) {
             const randomKegiatan = faker.helpers.arrayElement(kegiatanRecords);
+            const randomJabatan = faker.helpers.arrayElement(jabatanRecords)
 
             // Ensure the kegiatan isn't assigned multiple times for the same user
             if (!assignedKegiatans.has(randomKegiatan)) {
@@ -217,18 +235,40 @@ const seedUsersToKegiatans = async () => {
                     await db.insert(usersToKegiatans).values({
                         userId: user.userId,
                         kegiatanId: randomKegiatan.kegiatanId,
-                        status: status,
-                        roleKegiatan: faker.helpers.arrayElement(['pic', 'anggota']),
+                        jabatanId: randomJabatan.jabatanId,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                     });
 
-                     // Add user to the ChatRoom if not already added
-                     const chatRoom = await ChatRoom.findOne({ roomId: randomKegiatan.kegiatanId });
-                     if (chatRoom && !chatRoom.assignedUsers?.includes(user.userId)) {
-                         chatRoom.assignedUsers!.push(user.userId);
-                         await chatRoom.save();
-                     }
+                    // Add user to the ChatRoom if not already added
+                    const chatRoom = await ChatRoom.findOne({ roomId: randomKegiatan.kegiatanId });
+                    if (chatRoom && !chatRoom.assignedUsers?.includes(user.userId)) {
+                        chatRoom.assignedUsers!.push(user.userId);
+                        await chatRoom.save();
+
+                        // Create random live chat messages
+                        const messageCount = 2;
+                        for (let i = 0; i < messageCount; i++) {
+                            const hasAttachment = faker.datatype.boolean();
+                            const attachments = hasAttachment
+                                ? [
+                                    {
+                                        filename: faker.system.fileName(),
+                                        url: faker.internet.url(),
+                                        type: faker.system.fileExt(),
+                                    },
+                                ]
+                                : [];
+                            await Message.create({
+                                roomId: chatRoom.roomId,
+                                senderId: user.userId,
+                                message: faker.lorem.sentence(),
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                                attachments,
+                            });
+                        }
+                    }
 
                     const apa = await db.select().from(kompetensisToKegiatans).where(eq(kompetensisToKegiatans.kegiatanId, randomKegiatan.kegiatanId))
                     const newListKompetensi = apa.map((asd) => {
@@ -249,8 +289,8 @@ const seedUsersToKegiatans = async () => {
                         await db.insert(jumlahKegiatan)
                             .values({
                                 userId: user.userId,
-                                year: randomKegiatan.tanggal!.getFullYear(),
-                                month: randomKegiatan.tanggal!.getMonth(),
+                                year: randomKegiatan.tanggalMulai!.getFullYear(),
+                                month: randomKegiatan.tanggalMulai!.getMonth(),
                                 jumlahKegiatan: 1,
                             }).onDuplicateKeyUpdate({
                                 set: {
@@ -268,23 +308,6 @@ const seedUsersToKegiatans = async () => {
     console.log(`Seeded usersToKegiatans`);
 };
 
-
-// Seed for 'jumlahKegiatan' table
-// const seedJumlahKegiatan = async () => {
-//     const userRecords = await db.select().from(users);
-
-//     const jumlahKegiatanSeeds = Array.from({ length: 15 }).map(() => ({
-//         userId: faker.helpers.arrayElement(userRecords).userId,
-//         year: faker.date.past().getFullYear(),
-//         month: faker.helpers.arrayElement([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
-//         jumlahKegiatan: faker.number.int({ min: 1, max: 10 }),
-//         createdAt: new Date(),
-//         updatedAt: new Date(),
-//     }));
-
-//     await db.insert(jumlahKegiatan).values(jumlahKegiatanSeeds);
-//     console.log(`Seeded ${jumlahKegiatanSeeds.length} jumlah kegiatan entries`);
-// };
 
 // Seed for 'lampiranKegiatans' table
 const seedLampiranKegiatans = async () => {
@@ -313,19 +336,23 @@ const seedLampiranKegiatans = async () => {
 
 
 // Seed for 'agendaKegiatans' table
+// Seed for 'agendaKegiatans' table
 const seedAgendaKegiatans = async () => {
     const kegiatanRecords = await db.select().from(kegiatans);
-    const userRecords = await db.select().from(users);
+    const userToKegiatanRecords = await db.select().from(usersToKegiatans);
+
     const agendaSeeds = [];
+    const userToAgendaSeeds = [];
 
     for (const kegiatan of kegiatanRecords) {
         // Randomize the number of agendas for each kegiatan
         const agendaCount = faker.number.int({ min: 1, max: 5 });
 
         for (let i = 0; i < agendaCount; i++) {
+            const agendaId = createId(); // Generate unique ID for each agenda
             agendaSeeds.push({
+                agendaId,
                 kegiatanId: kegiatan.kegiatanId,
-                userId: faker.helpers.arrayElement(userRecords).userId,
                 jadwalAgenda: faker.date.future(),
                 namaAgenda: faker.lorem.sentence(),
                 deskripsiAgenda: faker.lorem.paragraph(),
@@ -333,13 +360,34 @@ const seedAgendaKegiatans = async () => {
                 createdAt: new Date(),
                 updatedAt: new Date(),
             });
+
+            // Assign users linked to the kegiatan to this agenda
+            const relatedUsers = userToKegiatanRecords.filter(
+                (utk) => utk.kegiatanId === kegiatan.kegiatanId
+            );
+
+            for (const user of relatedUsers) {
+                userToAgendaSeeds.push({
+                    agendaId,
+                    userKegiatanId: user.userToKegiatanId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                });
+            }
         }
     }
 
     // Bulk insert all agenda records
     await db.insert(agendaKegiatans).values(agendaSeeds);
     console.log(`Seeded ${agendaSeeds.length} agenda kegiatans`);
+
+    // Bulk insert user-to-agenda assignments
+    if (userToAgendaSeeds.length > 0) {
+        await db.insert(agendaToUsersKegiatans).values(userToAgendaSeeds); // Update to correct user-to-agenda table if needed
+        console.log(`Assigned ${userToAgendaSeeds.length} users to agenda kegiatans`);
+    }
 };
+
 
 
 const seedAgendaProgressAndAttachments = async () => {
@@ -353,7 +401,7 @@ const seedAgendaProgressAndAttachments = async () => {
         const progressCount = faker.number.int({ min: 1, max: 5 });
 
         for (let i = 0; i < progressCount; i++) {
-            const progressId = faker.string.uuid(); // Use UUIDs for unique progress IDs
+            const progressId = createId(); // Use UUIDs for unique progress IDs
             const createdAt = new Date();
             const updatedAt = new Date();
 
@@ -371,7 +419,7 @@ const seedAgendaProgressAndAttachments = async () => {
             const assignedAttachmentIds = new Set();
 
             for (let j = 0; j < attachmentCount; j++) {
-                const attachmentId = faker.string.uuid(); // Unique UUID for each attachment
+                const attachmentId = createId(); // Unique UUID for each attachment
 
                 // Avoid duplicate attachments for this progress
                 if (!assignedAttachmentIds.has(attachmentId)) {
@@ -410,53 +458,21 @@ const seedAgendaProgressAndAttachments = async () => {
 };
 
 
-// // Seed for 'kompetensiToKegiatans' junction table
-// const seedKompetensiToKegiatans = async () => {
-//     const kompetensiRecords = await db.select().from(kompetensis);
-//     const kegiatanRecords = await db.select().from(kegiatans);
-
-//     for (let i = 0; i < 15; i++) {
-//         const kompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
-//         const kegiatanId = faker.helpers.arrayElement(kegiatanRecords).kegiatanId;
-
-//         // Check if the relationship already exists
-//         const existingRecord = await db
-//             .select()
-//             .from(kompetensisToKegiatans)
-//             .where(and(
-//                 eq(kompetensisToKegiatans.kompetensiId, kompetensiId),
-//                 eq(kompetensisToKegiatans.kegiatanId, kegiatanId)
-//             ));
-
-//         if (existingRecord.length === 0) {
-//             await db.insert(kompetensisToKegiatans).values({
-//                 kompetensiId,
-//                 kegiatanId,
-//             });
-//         }
-//     }
-//     console.log(`Seeded kompetensiToKegiatans`);
-// };
-
-
 // Main function to run all seeders
 const runSeeds = async () => {
     mongoose.connect(process.env.MONGODB_URI!
-        // {
-        //     useNewUrlParser: true,
-        //     useUnifiedTopology: true,
-        // } as mongoose.ConnectOptions
     )
         .then(() => console.log('MongoDB connected'))
         .catch((err) => console.log(err));
 
     await seedUsers();
     await seedKompetensis();
+    await seedJabatan();
     await seedKegiatans();
+    await seedUsersToKegiatans();
     await seedLampiranKegiatans();
     await seedAgendaKegiatans();
     await seedUsersToKompetensis();
-    await seedUsersToKegiatans();
     await seedAgendaProgressAndAttachments()
     console.log('All seed data inserted');
     exit()

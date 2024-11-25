@@ -1,5 +1,5 @@
 import { addTimestamps, db } from "./utilsModel";
-import { jumlahKegiatan, users, usersToKompetensis } from "../db/schema";
+import { jumlahKegiatan, kompetensis, users, usersToKompetensis } from "../db/schema";
 import { and, eq, getTableColumns, sql, count } from "drizzle-orm";
 
 export type UserDataType = typeof users.$inferInsert
@@ -12,60 +12,9 @@ export async function fetchAllUser() {
         columns: {
             password: false
         },
-        with: {
-            usersKompetensi: {
-                with: {
-                    kompetensi: true  // Fetch the related 'kompetensi' data
-                }
-            }
-        }
     }).prepare()
 
-    let dat = await prepared.execute()
-
-    // Extracting users with all their details, but only the list of 'namaKompetensi' from the 'kompetensi' relation
-    const temp = dat.map((user) => {
-        return {
-            ...user,  // Spread the rest of the user information
-            kompetensi: user.usersKompetensi.map((kompetensiJunction) =>
-                kompetensiJunction.kompetensi?.namaKompetensi  // Extract 'namaKompetensi' from the 'kompetensi' object
-            ),
-            usersKompetensi: undefined
-        }
-    })
-
-    return temp
-}
-
-export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
-    const prepared = db.query.users.findMany({
-        columns: {
-            password: false
-        },
-        with: {
-            usersKompetensi: {
-                with: {
-                    kompetensi: true  // Fetch the related 'kompetensi' data
-                }
-            }
-        },
-        where: ((users, { eq }) => eq(users.role, sql.placeholder('role')))
-    }).prepare()
-
-    let dat = await prepared.execute({ role })
-
-    // Extracting users with all their details, but only the list of 'namaKompetensi' from the 'kompetensi' relation
-    const temp = dat.map((user) => {
-        return {
-            ...user,  // Spread the rest of the user information
-            kompetensi: user.usersKompetensi.map((kompetensiJunction) =>
-                kompetensiJunction.kompetensi?.namaKompetensi  // Extract 'namaKompetensi' from the 'kompetensi' object
-            ),
-            usersKompetensi: undefined
-        }
-    })
-
-    return temp
+    return await prepared.execute()
 }
 
 export async function fetchUserComplete(uidUser?: string, nip?: string) {
@@ -74,7 +23,8 @@ export async function fetchUserComplete(uidUser?: string, nip?: string) {
             password: false
         },
         with: {
-            usersKompetensi: {
+            kompetensis: {
+                columns: {},
                 with: {
                     kompetensi: true  // Fetch the related 'kompetensi' data
                 }
@@ -86,15 +36,26 @@ export async function fetchUserComplete(uidUser?: string, nip?: string) {
     let dat = await prepared.execute(nip ? { nip } : { uidUser })
 
     // Extracting users with all their details, but only the list of 'namaKompetensi' from the 'kompetensi' relation
-    const temp = dat?.usersKompetensi ? dat!.usersKompetensi.map((kompetensi) => {
-        return kompetensi.kompetensi.namaKompetensi
+    const temp = dat?.kompetensis ? dat!.kompetensis.map((kompetensi) => {
+        return kompetensi.kompetensi
     }) : null
 
     return dat ? {
         ...dat,
         kompetensi: temp,
-        usersKompetensi: undefined
+        kompetensis: undefined
     } : undefined
+}
+
+export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
+    const prepared = db.query.users.findMany({
+        columns: {
+            password: false
+        },
+        where: ((users, { eq }) => eq(users.role, sql.placeholder('role')))
+    }).prepare()
+
+    return await prepared.execute({ role })
 }
 
 export async function fetchUserCount(role: 'dosen' | 'manajemen') {

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { createResponse } from "../utils/utils";
 import * as agendaServices from '../services/agendaService'
-import { fetchUserRoleInKegiatan } from '../models/penugasanModels'
+import { fetchUserJabatanInKegiatan } from '../models/penugasanModels'
 
 export async function fetchAgenda(req: Request, res: Response) {
     const errors = validationResult(req);
@@ -65,10 +65,10 @@ export async function createAgenda(req: Request, res: Response) {
     }
 
     const { uid_kegiatan: uidKegiatan } = req.query
-    let { uid_user: userUid, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
+    let { jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status, list_uid_user_kegiatan: listUserKegiatan } = req.body
 
     if (req.user?.role === 'dosen') {
-        const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
+        const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(
                 false,
@@ -78,7 +78,7 @@ export async function createAgenda(req: Request, res: Response) {
             return
         }
 
-        if (wasAllowed.role == 'anggota') {
+        if (!wasAllowed.isPic) {
             res.status(401).json(createResponse(
                 false,
                 null,
@@ -89,7 +89,7 @@ export async function createAgenda(req: Request, res: Response) {
     }
 
     try {
-        const data = await agendaServices.createAgenda({ kegiatanId: (uidKegiatan as string), userId: userUid, jadwalAgenda, namaAgenda, deskripsiAgenda, status })
+        const data = await agendaServices.createAgenda({ kegiatanId: (uidKegiatan as string), jadwalAgenda, namaAgenda, deskripsiAgenda, status }, listUserKegiatan)
 
         res.status(200).json(createResponse(
             true,
@@ -105,11 +105,11 @@ export async function createAgenda(req: Request, res: Response) {
                     "Kegiatan uid was not found, bad relationship"
                 ))
                 return
-            } else if (err.message.toLowerCase().includes('references `users`')) {
+            } else if (err.message.toLowerCase().includes('references `users_to_kegiatan`')) {
                 res.status(404).json(createResponse(
                     false,
                     null,
-                    "User uid was not found, bad relationship"
+                    "User to Kegiatan uid was not found, bad relationship"
                 ))
                 return
             } else {
@@ -203,14 +203,11 @@ export async function updateAgenda(req: Request, res: Response) {
     }
 
     const { uid: uidAgenda } = req.query
-    let { uid_user: userUid, kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status } = req.body
+    let { kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, status, list_user_kegiatan: listUserKegiatan } = req.body
 
-    if (userUid === "") {
-        userUid = req.user?.userId
-    }
 
     if (req.user?.role === 'dosen') {
-        const wasAllowed = await fetchUserRoleInKegiatan(uidKegiatan as string, req.user!.userId as string)
+        const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(
                 false,
@@ -222,7 +219,7 @@ export async function updateAgenda(req: Request, res: Response) {
     }
 
     try {
-        const data = await agendaServices.updateAgenda(uidAgenda as string, { kegiatanId: (uidKegiatan as string), userId: userUid, jadwalAgenda, namaAgenda, deskripsiAgenda, status })
+        const data = await agendaServices.updateAgenda(uidAgenda as string, { kegiatanId: (uidKegiatan as string), jadwalAgenda, namaAgenda, deskripsiAgenda, status }, listUserKegiatan)
 
         res.status(200).json(createResponse(
             true,
@@ -238,11 +235,11 @@ export async function updateAgenda(req: Request, res: Response) {
                     "Kegiatan uid was not found, bad relationship"
                 ))
                 return
-            } else if (err.message.toLowerCase().includes('references `users`')) {
+            } else if (err.message.toLowerCase().includes('references `users_to_kegiatan`')) {
                 res.status(404).json(createResponse(
                     false,
                     null,
-                    "User uid was not found, bad relationship"
+                    "User to Kegiatan uid was not found, bad relationship"
                 ))
                 return
             } else {
@@ -331,6 +328,53 @@ export async function deleteAgenda(req: Request, res: Response) {
 
     try {
         const data = await agendaServices.deleteAgenda(uidAgenda as string)
+
+        if (data === "agenda_is_not_found") {
+            res.status(404).json(createResponse(false, null, "Agenda not found"))
+            return
+        }
+
+        res.status(200).json(createResponse(
+            true,
+            data,
+            "OK"
+        ));
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            null,
+            "Mbuh mas"
+        ))
+    }
+
+}
+
+export async function deleteUserFromAgenda(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    const { uid: uidAgenda, uid_user_kegiatan: uidUserKegiatan } = req.query
+
+    try {
+        const data = await agendaServices.deleteUserFromAgenda(uidAgenda as string, uidUserKegiatan as string)
 
         if (data === "agenda_is_not_found") {
             res.status(404).json(createResponse(false, null, "Agenda not found"))

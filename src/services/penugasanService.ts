@@ -5,7 +5,14 @@ import * as usersModels from '../models/usersModels'
 import { fetchUserByUid } from '../models/usersModels'
 import { ChatRoom } from '../models/livechatModels'
 
-export async function tugaskanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid_user: string, role: 'pic' | 'anggota' }[]) {
+export async function fetchPenugasanOnKegiatan(uidKegiatan: string, uidUser: string) {
+    const apa = await penugasanModels.fetchKegiatanWithUser(uidKegiatan, uidUser)
+    if (!apa || Object.keys(apa).length === 0) return "penugasan_is_not_found"
+
+    return apa
+}
+
+export async function tugaskanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid_user: string, uid_jabatan: string }[]) {
     // TODO Do notification
     const penugasan = await penugasanModels.createPenugasan(uidKegiatan, listUserDitugaskan)
 
@@ -20,17 +27,9 @@ export async function tugaskanKegiatan(uidKegiatan: string, listUserDitugaskan: 
     return penugasan
 }
 
-export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid_user: string, role: 'pic' | 'anggota', status: 'ditugaskan' | 'selesai' }[]) {
+export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid_user: string, uid_jabatan: string }[]) {
     // TODO Do notification
     const apa = await penugasanModels.updatePenugasanKegiatan(uidKegiatan, listUserDitugaskan)
-
-    const kegKomp = await kegiatanModels.fetchKompetensiKegiatan(uidKegiatan)
-    await Promise.all(listUserDitugaskan.map(async (ap) => {
-        if (ap.status === 'selesai') {
-            await usersModels.addUserKompetensi(ap.uid_user, kegKomp.kompetensi!)
-            await usersModels.addJumlahKegiatan(ap.uid_user, undefined, kegKomp.tanggal!.getFullYear(), kegKomp.tanggal!.getMonth() + 1)
-        }
-    }))
 
     return apa
 }
@@ -38,16 +37,16 @@ export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitug
 export async function deletePenugasan(uidKegiatan: string, uidUser: string) {
     // TODO fix logic here
     const ap = await fetchKegiatanByUid(uidKegiatan)
-    if (!ap) return "kegiatan_is_not_found"
+    if (!ap || Object.keys(ap).length === 0) return "kegiatan_is_not_found"
 
     const wt = await fetchUserByUid(uidUser)
-    if (!wt) return "user_is_not_found"
+    if (!wt || Object.keys(wt).length === 0) return "user_is_not_found"
 
     const apa = await penugasanModels.deletePenugasan(uidKegiatan, uidUser)
 
     const kegKomp = await kegiatanModels.fetchKegiatanByUid(uidKegiatan)
-    const tahun = kegKomp?.tanggal ? kegKomp?.tanggal?.getFullYear() : 0
-    const bulan = kegKomp?.tanggal ? kegKomp?.tanggal?.getMonth() + 1 : 0
+    const tahun = kegKomp?.tanggalMulai ? kegKomp?.tanggalMulai?.getFullYear() : 0
+    const bulan = kegKomp?.tanggalMulai ? kegKomp?.tanggalMulai?.getMonth() + 1 : 0
 
     await usersModels.addJumlahKegiatan(uidUser, true, tahun, bulan)
 

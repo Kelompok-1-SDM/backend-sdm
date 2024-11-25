@@ -18,6 +18,7 @@ import agendaRoutes from './routes/agendaRoute'
 import lampiranRoutes from './routes/lampiranRoute'
 import penugasanRoutes from './routes/penugasanRoute'
 import kompetensiRoutes from './routes/kompetensiRoute'
+import jabatanRoutes from './routes/jabatanRoute'
 import livechatUploadRoute from './routes/livechatRoute'
 import mongoose from 'mongoose';
 
@@ -50,6 +51,7 @@ app.use('/api/agenda', agendaRoutes);
 app.use('/api/lampiran', lampiranRoutes);
 app.use('/api/penugasan', penugasanRoutes);
 app.use('/api/kompetensi', kompetensiRoutes);
+app.use('/api/jabatan', jabatanRoutes);
 app.use('/api/livechat', livechatUploadRoute);
 const livechatSocket = io.of('/api/livechat')
 

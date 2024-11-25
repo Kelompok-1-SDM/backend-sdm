@@ -14,8 +14,6 @@ router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
 router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid_kegiatan').isString().trim().withMessage('This key is required and is string'),
     query('uid_kegiatan').notEmpty().withMessage("This key should be not empty"),
-    body('uid_user').isString().trim().withMessage('This key is optional and is string'),
-    body('uid_user').notEmpty().withMessage("This key should be not empty"),
     body('jadwal_agenda').isISO8601().trim().toDate().withMessage('This key is required and is ISO8601'),
     body('jadwal_agenda').notEmpty().withMessage("This key should be not empty"),
     body('nama_agenda').isString().trim().withMessage('This key is required and is string'),
@@ -24,6 +22,13 @@ router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
     body('deskripsi_agenda').notEmpty().withMessage("This key should be not empty"),
     body('status').isIn(['rencana', 'jalan', 'selesai']).trim().withMessage("Status are 'rencana', 'jalan', 'selesai'"),
     body('status').notEmpty().withMessage("This key should be not empty"),
+    body('list_uid_user_kegiatan')
+        .isArray().optional().withMessage('List user ditugaskan must be an array')
+        .bail()
+        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
+    body('list_uid_user_kegiatan.*')
+        .isString().trim().withMessage('Each userKegiatanId in the list must be a string')
+        .notEmpty().withMessage('userKegiatanId cannot be empty'),
 ], agendaController.createAgenda)
 
 router.post('/progress', authorize(['admin', 'manajemen', 'dosen']), handleFileUploadArray, [
@@ -45,6 +50,13 @@ router.put('/', authorize(['admin', 'manajemen', 'dosen']), [
     body('deskripsi_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('status').isIn(['rencana', 'jalan', 'selesai']).optional().trim().withMessage("List tugaskan(role) are 'rencana', 'jalan', 'selesai'"),
     body('status').optional().notEmpty().withMessage("This key should be not empty"),
+    body('list_uid_user_kegiatan')
+        .isArray().optional().withMessage('List user ditugaskan must be an array')
+        .bail()
+        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
+    body('list_uid_user_kegiatan.*')
+        .isString().optional().trim().withMessage('Each userKegiatanId in the list must be a string')
+        .notEmpty().withMessage('userKegiatanId cannot be empty'),
 ], agendaController.updateAgenda)
 
 
@@ -61,6 +73,13 @@ router.delete('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().withMessage('This key is required and is string'),
     query('uid').notEmpty().withMessage("This key should be not empty")
 ], agendaController.deleteAgenda)
+
+router.delete('/user', authorize(['admin', 'manajemen', 'dosen']), [
+    query('uid').isString().trim().withMessage('This key is required and is string'),
+    query('uid').notEmpty().withMessage("This key should be not empty"),
+    query('uid_user_kegiatan').isString().trim().withMessage('This key is required and is string'),
+    query('uid_user_kegiatan').notEmpty().withMessage("This key should be not empty")
+], agendaController.deleteUserFromAgenda)
 
 router.delete('/progress', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().withMessage('This key is required and is string'),

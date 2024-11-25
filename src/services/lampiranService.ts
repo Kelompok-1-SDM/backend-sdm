@@ -18,7 +18,7 @@ export async function createLampiran(uidkegiatan: string, files: Express.Multer.
 
 export async function deleteLampiran(uidLampiran: string) {
     const ap = await lampiranModels.fetchLampiranByUid(uidLampiran)
-    if (!ap) return `lampiran_is_not_found`
+    if (!ap || Object.keys(ap).length === 0) return `lampiran_is_not_found`
 
     return lampiranModels.deleteLampiranKegiatan(uidLampiran)
 }

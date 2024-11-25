@@ -1,31 +1,16 @@
-import { and, desc, eq, getTableColumns, sql, count } from "drizzle-orm";
-import { jumlahKegiatan, kegiatans, kompetensis, kompetensisToKegiatans, users, usersToKegiatans, usersToKompetensis } from "../db/schema";
+import { and, desc, eq, getTableColumns, sql, count, or } from "drizzle-orm";
+import { jabatanAnggota, jumlahKegiatan, kegiatans, kompetensis, kompetensisToKegiatans, usersToKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
-import { userTableColumns } from "./usersModels";
+import { kompetensisColumns } from "./kompetensiModels";
 
 export type KegiatanDataType = typeof kegiatans.$inferInsert
 export const kegiatansColumns = getTableColumns(kegiatans)
 
 //TODO Improve at query peformance
 export async function fetchAllKegiatan() {
-    const prepared = db.query.kegiatans.findMany({
-        with: {
-            kompetensiKegiatan: {
-                with: {
-                    kompetensi: true
-                }
-            }
-        }
-    }).prepare()
+    const prepared = db.query.kegiatans.findMany().prepare()
 
-    const dat = await prepared.execute()
-    return dat.map((it) => {
-        return {
-            ...it,
-            kompetensi: it.kompetensiKegiatan.map((kompe) => kompe.kompetensi.namaKompetensi),
-            kompetensiKegiatan: undefined
-        }
-    })
+    return await prepared.execute()
 }
 
 export async function fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser: string, month?: number) {
@@ -53,8 +38,11 @@ export async function fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser: string,
         .where(
             and(
                 eq(usersToKegiatans.userId, sql.placeholder('uidUser')),
-                eq(usersToKegiatans.status, 'ditugaskan'),
-                month ? sql`MONTH(${kegiatans.tanggal}) = ${month}` : undefined
+                eq(kegiatans.isDone, false),
+                or(
+                    month ? sql`MONTH(${kegiatans.tanggalMulai}) = ${month}` : undefined,
+                    month ? sql`MONTH(${kegiatans.tanggalAkhir}) = ${month}` : undefined
+                )
             )
         )
         .groupBy(usersToKegiatans.kegiatanId)
@@ -73,8 +61,8 @@ export async function fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser: string,
     // Execute the query
     const [res] = await prepared.execute({ uidUser });
     return {
-        count: res.count ?? 0,
-        kompetensiList: res.kompetensiList ? res.kompetensiList.split(',').slice(0, 3) : [],
+        count: res?.count ?? 0,
+        kompetensiList: res?.kompetensiList ? res.kompetensiList.split(',').slice(0, 3) : [],
     };
 
 }
@@ -83,19 +71,17 @@ export async function fetchKompetensiKegiatan(uidKegiatan: string) {
     const prepared = db.query.kegiatans.findFirst({
         where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
         with: {
-            kompetensiKegiatan: true
+            kompetensi: true
         }
     }).prepare()
 
     const res = await prepared.execute({ uidKegiatan })
-    const temp = res?.kompetensiKegiatan.map((dat) => {
-        return dat.kompetensiId
-    })
 
     return {
         ...res,
-        kompetensi: temp,
-        kompetensiKegiatan: undefined
+        kompetensi: res?.kompetensi.map((dat) => {
+            return dat.kompetensiId
+        })
     }
 }
 
@@ -117,12 +103,12 @@ export async function fetchPeformaKegiatan(year: number) {
 
 export async function fetchKegiatanCountEachYear() {
     const prepared = db.select({
-        year: sql<number>`YEAR(${kegiatans.tanggal})`,
+        year: sql<number>`YEAR(${kegiatans.tanggalMulai})`,
         count: count(kegiatans.kegiatanId)
     })
         .from(kegiatans)
-        .groupBy(sql<number>`YEAR(${kegiatans.tanggal})`)
-        .orderBy(sql<number>`YEAR(${kegiatans.tanggal})`)
+        .groupBy(sql<number>`YEAR(${kegiatans.tanggalMulai})`)
+        .orderBy(sql<number>`YEAR(${kegiatans.tanggalMulai})`)
         .prepare()
     const res = await prepared.execute()
     const maxAvgJumlahKegiatan = Math.max(...res.map(row => row.count + 3));
@@ -139,30 +125,28 @@ export async function fetchKegiatanCountAll() {
     return res.count
 }
 
-export async function fetchKegiatanByUser(uidUser: string, status?: 'ditugaskan' | 'selesai', tanggal?: string, wasLimitedTwo: boolean = false) {
-    const prepared1 = db.select(userTableColumns).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare();
-    const [datUser] = await prepared1.execute({ uidUser });
-
+export async function fetchKegiatanByUser(uidUser: string, isDone?: boolean, tanggal?: string, wasLimitedTwo: boolean = false) {
     const formattedTanggal = tanggal ? new Date(tanggal).toISOString().split('T')[0] : undefined;
 
     const prepared2 = db
         .select({
             ...kegiatansColumns,
-            status: usersToKegiatans.status,
-            role: usersToKegiatans.roleKegiatan,
+            jabatan: jabatanAnggota.namaJabatan,
+            isPic: jabatanAnggota.isPic
         })
         .from(usersToKegiatans)
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
+        .leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId))
         .where(
             and(
                 eq(usersToKegiatans.userId, sql.placeholder("uidUser")),
-                status ? eq(usersToKegiatans.status, sql.placeholder("status")) : undefined,
+                isDone ? eq(kegiatans.isDone, sql.placeholder("isDone")) : undefined,
                 tanggal
-                    ? eq(sql`DATE(${kegiatans.tanggal})`, sql.placeholder("tanggal"))
+                    ? eq(sql`DATE(${kegiatans.tanggalMulai})`, sql.placeholder("tanggal"))
                     : undefined
             )
         )
-        .orderBy(desc(kegiatans.tanggal));
+        .orderBy(desc(kegiatans.tanggalMulai));
 
 
     // Apply limit if requested
@@ -170,13 +154,11 @@ export async function fetchKegiatanByUser(uidUser: string, status?: 'ditugaskan'
 
     // Execute query
     prepared2.prepare();
-    let kg = await prepared2.execute({ uidUser, status, tanggal: formattedTanggal });
+    let kg = await prepared2.execute({ uidUser, isDone, tanggal: formattedTanggal });
 
     // Query to get kompetensi names only
     const prepared3 = db
-        .select({
-            namaKompetensi: kompetensis.namaKompetensi
-        })
+        .select(kompetensisColumns)
         .from(kompetensisToKegiatans)
         .innerJoin(kompetensis, eq(kompetensis.kompetensiId, kompetensisToKegiatans.kompetensiId))
         .where(eq(kompetensisToKegiatans.kegiatanId, sql.placeholder('kegiatanUid')))
@@ -184,97 +166,125 @@ export async function fetchKegiatanByUser(uidUser: string, status?: 'ditugaskan'
 
     kg = await Promise.all(kg.map(async (it) => {
         const kompetensiData = await prepared3.execute({ kegiatanUid: it.kegiatanId });
-        const kompetensiNames = kompetensiData.map((komp) => komp.namaKompetensi);
 
         return {
             ...it,
-            kompetensi: kompetensiNames
+            kompetensi: kompetensiData
         };
     }));
 
     // Return the user data with the kegiatan records
-    return {
-        ...datUser,
-        kegiatan: kg
-    };
+    return kg
 
 }
 
 export async function fetchUserCurrentKegiatan(uidUser: string, datetime: Date) {
-    const prepared = db.select({ ...kegiatansColumns, status: usersToKegiatans.status, role: usersToKegiatans.roleKegiatan }).from(usersToKegiatans)
+    const prepared = db.select({ ...kegiatansColumns, jabatan: jabatanAnggota.namaJabatan, isPic: jabatanAnggota.isPic }).from(usersToKegiatans)
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
-        .where(and(eq(usersToKegiatans.userId, sql.placeholder('uidUser')), eq(kegiatans.tanggal, sql.placeholder('datetime')))).prepare()
+        .leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId))
+        .where(and(eq(usersToKegiatans.userId, sql.placeholder('uidUser')), eq(kegiatans.tanggalMulai, sql.placeholder('datetime')))).prepare()
     const [kegiatan] = await prepared.execute({ uidUser, datetime })
 
     return kegiatan
 }
 
 export async function fetchKegiatanByUid(uidKegiatan: string) {
-    const prepared1 = db.query.kegiatans.findFirst({
+    const prepared = db.query.kegiatans.findFirst({
         where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
         with: {
-            lampiranKegiatan: true,
-            agendaKegiatans: true,
-            kompetensiKegiatan: {
+            lampiran: true,
+            agenda: {
                 with: {
-                    kompetensi: true // Fetch the related 'kompetensi' data
+                    agendaToUser: {
+                        columns: {},
+                        with: {
+                            userToKegiatans: {
+                                columns: {},
+                                with: {
+                                    users: {
+                                        columns: {
+                                            password: false
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             },
-            usersKegiatans: true
-        }
+            kompetensi: {
+                columns: {},
+                with: {
+                    kompetensis: true // Fetch the related 'kompetensi' data
+                }
+            },
+            users: {
+                with: {
+                    jabatans: true,
+                    users: {
+                        columns: {
+                            password: false
+                        },
+                        with: {
+                            kompetensis: {
+                                columns: {},
+                                with: {
+                                    kompetensi: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
     }).prepare()
 
-    let kegiatan = await prepared1.execute({ uidKegiatan })
+    let kegiatan = await prepared.execute({ uidKegiatan })
 
     if (!kegiatan) return undefined
-
-    const prepared2 = db.select(userTableColumns).from(users).where(eq(users.userId, sql.placeholder('uidUser'))).prepare()
-
-    const prepared3 = db
-        .select({
-            namaKompetensi: kompetensis.namaKompetensi
-        })
-        .from(usersToKompetensis)
-        .innerJoin(kompetensis, eq(kompetensis.kompetensiId, usersToKompetensis.kompetensiId))
-        .where(eq(usersToKompetensis.userId, sql.placeholder('uidUser')))
-        .limit(3)
-        .prepare();
-
-    const apa = await Promise.all(kegiatan.usersKegiatans.map(async (it) => {
-        const kompetensiData = await prepared3.execute({ uidUser: it.userId });
-        const [user] = await prepared2.execute({ uidUser: it.userId })
-        const kompetensiNames = kompetensiData.map((komp) => komp.namaKompetensi);
-
-        return {
-            ...user,
-            roleKegiatan: it.roleKegiatan,
-            status: it.status,
-            kompetensi: kompetensiNames
-        };
-    }));
-
-    // Extract the kompetensi (namaKompetensi) from kompetensiKegiatan
-    const kompe = kegiatan.kompetensiKegiatan.map((it) => it.kompetensi.namaKompetensi)
-
-    // Return the transformed result, renaming fields as needed
+    
     return {
-        ...kegiatan, // Spread all other properties of kegiatan
-        kompetensi: kompe, // Rename kompetensiKegiatan to kompetensi and keep only namaKompetensi
-        lampiran: kegiatan.lampiranKegiatan, // Keep lampiranKegiatan as lampiran
-        agenda: kegiatan.agendaKegiatans, // Keep agendaKegiatans as agenda
-        user: apa,
+        ...kegiatan,
+        agenda: kegiatan.agenda.map((it) => {
+            return {
+                ...it,
+                users: it.agendaToUser.map((it1) => {
+                    return {
+                        ...it1.userToKegiatans.users
+                    }
+                }),
 
-        kompetensiKegiatan: undefined, // Remove kompetensiKegiatan from the result
-        lampiranKegiatan: undefined,
-        agendaKegiatans: undefined,
-        usersKegiatans: undefined
+                agendaToUser: undefined
+            }
+        }),
+
+        users: kegiatan.users ? kegiatan.users.map((it) => {
+            return {
+                ...it.users,
+                namaJabatan: it.jabatans.namaJabatan,
+                isPic: it.jabatans.isPic,
+                kompetensi: it.users.kompetensis.map((its) => { return { ...its.kompetensi } }).slice(0, 2),
+                kompetensis: undefined
+            }
+        }).sort((a, b) => {
+            const isPicA = a.isPic ?? false; // Treat null as false
+            const isPicB = b.isPic ?? false; // Treat null as false
+            return Number(isPicB) - Number(isPicA); // Convert boolean to number for comparison
+        }) : undefined,
+
+        kompetensi: kegiatan.kompetensi.map((it) => it.kompetensis)
     }
 
 }
 
 export async function fetchKegiatanOnly(uidKegiatan: string) {
-    const prepared = db.select().from(kegiatans).where(eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))).prepare()
-    const [kegiatan] = await prepared.execute({ uidKegiatan })
+    const prepared = db.query.kegiatans.findFirst({
+        where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
+        with: {
+            kompetensi: true
+        }
+    }).prepare()
+    const kegiatan = await prepared.execute({ uidKegiatan })
 
     return kegiatan
 }
@@ -297,15 +307,7 @@ export async function createKegiatan(kegiatanData: KegiatanDataType, listKompete
         }
     })
 
-    const data = await fetchKegiatanByUid(idKegiatan!.kegiatanId)
-
-    return {
-        ...data,
-
-        lampiran: undefined,
-        agenda: undefined,
-        user: undefined
-    }
+    return await fetchKegiatanOnly(idKegiatan!.kegiatanId)
 }
 
 export async function updateKegiatan(uidKegiatan: string, data: Partial<KegiatanDataType>, listKompetensiUid: string[]) {
@@ -332,27 +334,19 @@ export async function updateKegiatan(uidKegiatan: string, data: Partial<Kegiatan
         }
     })
 
-    const dat = await fetchKegiatanByUid(uidKegiatan)
-
-    return {
-        ...dat,
-
-        lampiran: undefined,
-        agenda: undefined,
-        user: undefined
-    }
+    return await fetchKegiatanOnly(uidKegiatan)
 }
 
 export async function deleteKegiatan(uidKegiatan: string) {
-    const keg = await fetchKegiatanByUid(uidKegiatan)
+    const keg = await fetchKegiatanOnly(uidKegiatan)
 
     await db.delete(kegiatans).where(eq(kegiatans.kegiatanId, uidKegiatan))
 
-    return {
-        ...keg,
+    return keg
+}
 
-        lampiran: undefined,
-        agenda: undefined,
-        user: undefined
-    }
+export async function deleteKommpetensiFromkegiatan(uidKegiatan: string, uidKompetensi: string) {
+    await db.delete(kompetensisToKegiatans).where(and(eq(kompetensisToKegiatans.kegiatanId, uidKegiatan), eq(kompetensisToKegiatans.kompetensiId, uidKompetensi)))
+
+    return await fetchKegiatanOnly(uidKegiatan)
 }

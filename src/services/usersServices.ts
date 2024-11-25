@@ -6,16 +6,23 @@ import { calculateFileHash, exportExcel, parseExcel, uploadFileToCdn } from "./u
 
 export async function homepageMobile(uidUser: string) {
     const temp = await usersModels.fetchUserByUid(uidUser)
-    if (!temp) return "user_is_not_found"
+    if (!temp || Object.keys(temp).length === 0) return "user_is_not_found"
 
     const jumlahBulanSkrg = await kegiatanModels.fetchJumlahKegiatanAkanDilaksanakanByUser(uidUser, new Date().getMonth() + 1)
-    const duaTugasTerbaru = await kegiatanModels.fetchKegiatanByUser(uidUser, "ditugaskan", undefined, true)
+    const duaTugasTerbaru = await kegiatanModels.fetchKegiatanByUser(uidUser, false, undefined, true)
     const tugasBerlangsung = await kegiatanModels.fetchUserCurrentKegiatan(uidUser, new Date())
     const stats = await statistic(uidUser)
 
+    const temp1 = duaTugasTerbaru.map((it: any) => {
+        return {
+            ...it,
+            kompetensi: it.kompetensi.map((at: any) => at.namaKompetensi)
+        }
+    })
+
     return {
         jumlahTugasBulanSekarang: jumlahBulanSkrg,
-        duaTugasTerbaru: duaTugasTerbaru.kegiatan,
+        duaTugasTerbaru: temp1,
         tugasBerlangsung: tugasBerlangsung ? tugasBerlangsung : null,
         statistik: stats
     }
@@ -42,7 +49,7 @@ export async function homepageWeb() {
 
 export async function statistic(uidUser: string, year: number = new Date().getFullYear()) {
     const temp = await usersModels.fetchUserByUid(uidUser)
-    if (!temp) return "user_is_not_found"
+    if (!temp || Object.keys(temp).length === 0) return "user_is_not_found"
 
     return await usersModels.fetchUserStatistic(uidUser, year)
 }
@@ -69,7 +76,7 @@ export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
 
 export async function fetchUser(uid?: string, nip?: string) {
     const res = await usersModels.fetchUserComplete(uid, nip)
-    if (!res) return "user_is_not_found"
+    if (!res || Object.keys(res).length === 0) return "user_is_not_found"
 
     return res
 }
@@ -105,7 +112,7 @@ export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]
 
 export async function updateUser(uidUser: string, data: Partial<usersModels.UserDataType>, file?: Express.Multer.File) {
     const temp = await usersModels.fetchUserByUid(uidUser)
-    if (!temp) return "user_is_not_found"
+    if (!temp || Object.keys(temp).length === 0) return "user_is_not_found"
 
     if (data.password) data.password = await hashPassword(data.password)
 
@@ -120,14 +127,14 @@ export async function updateUser(uidUser: string, data: Partial<usersModels.User
 
 export async function deleteUser(uidUser: string) {
     const res = await usersModels.deleteUser(uidUser)
-    if (!res) return "user_is_not_found"
+    if (!res || Object.keys(res).length === 0) return "user_is_not_found"
 
     return res
 }
 
 export async function deleteUserKompetensi(uidUser: string, uidKompetensi: string[]) {
     const temp = await usersModels.fetchUserByUid(uidUser)
-    if (!temp) return "user_is_not_found"
+    if (!temp || Object.keys(temp).length === 0) return "user_is_not_found"
 
     return await usersModels.deleteUserKompetensi(uidUser, uidKompetensi)
 }   

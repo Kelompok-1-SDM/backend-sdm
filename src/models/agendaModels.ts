@@ -1,5 +1,5 @@
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
-import { agendaKegiatans, progressAgenda, progressAgendaToProgressAttachment, progressAttachments } from "../db/schema";
+import { agendaKegiatans, agendaToUsersKegiatans, progressAgenda, progressAgendaToProgressAttachment, progressAttachments } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 
 export type AgendaKegiatanDataType = typeof agendaKegiatans.$inferInsert
@@ -10,22 +10,21 @@ export const progressColumns = getTableColumns(progressAgenda)
 export const attachColumns = getTableColumns(progressAttachments)
 
 //TODO Improve at query peformance
-
 export async function fetchProgress(uidProgress: string) {
     const prepared = db.query.progressAgenda.findFirst({
         where: ((progressAgenda, { eq }) => eq(progressAgenda.progressId, sql.placeholder('uidProgress'))),
         with: {
-            progressAgendaToProgressAttachment: true
+            progressAttachment: true,
         }
     }).prepare()
 
     const res = await prepared.execute({ uidProgress })
 
-    return {
+    return res ? {
         ...res, // Keep the agendaKegiatans (agenda) data
-        attachments: res?.progressAgendaToProgressAttachment, // Extract and flatten attachments
-        progressAgendaToProgressAttachment: undefined
-    };
+        attachments: res?.progressAttachment, // Extract and flatten attachments
+        progressAttachment: undefined
+    } : undefined
 }
 
 // Internal only
@@ -45,20 +44,48 @@ export async function fetchAgendaByKegiatan(uidKegiatan: string) {
     const prepared = db.query.kegiatans.findFirst({
         where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
         with: {
-            agendaKegiatans: {
-                orderBy: (agendaKegiatans, { desc }) => [desc(agendaKegiatans.jadwalAgenda)]
+            agenda: {
+                orderBy: (agendaKegiatans, { desc }) => [desc(agendaKegiatans.jadwalAgenda)],
+                with: {
+                    agendaToUser: {
+                        with: {
+                            userToKegiatans: {
+                                with: {
+                                    users: {
+                                        columns: {
+                                            password: false,
+                                            createdAt: false,
+                                            updatedAt: false
+                                        }
+                                    },
+                                    jabatans: true
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }).prepare()
 
-    const dat = await prepared.execute({ uidKegiatan })
+    let dat: any = await prepared.execute({ uidKegiatan })
 
-    return {
-        ...dat,
-        agenda: dat?.agendaKegiatans,
+    dat = dat?.agenda.map((it: any) => {
+        return {
+            ...it,
+            users: it.agendaToUser.map((ap: any) => {
+                return {
+                    ...ap.userToKegiatans.users,
+                    namaJabatan: ap.userToKegiatans.jabatans.namaJabatan,
+                    isPic: ap.userToKegiatans.jabatans.isPic
+                }
+            }),
 
-        agendaKegiatans: undefined
-    }
+            agendaToUser: undefined
+        }
+    })
+
+    return dat
 }
 
 export async function fetchAgenda(uidAgenda: string) {
@@ -68,7 +95,24 @@ export async function fetchAgenda(uidAgenda: string) {
             progress: {
                 orderBy: ((progressAgenda, { desc }) => [desc(progressAgenda.createdAt)]),
                 with: {
-                    progressAgendaToProgressAttachment: true
+                    progressAttachment: true
+                }
+            },
+            agendaToUser: {
+                columns: {
+                    userKegiatanId: true
+                },
+                with: {
+                    userToKegiatans: {
+                        columns: {},
+                        with: {
+                            users: {
+                                columns: {
+                                    password: false
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -76,14 +120,20 @@ export async function fetchAgenda(uidAgenda: string) {
 
     const res = await prepared.execute({ uidAgenda })
 
-    return {
+    return res ? {
         ...res, // Keep the agendaKegiatans (agenda) data
         progress: res?.progress.map(progress => ({
             ...progress, // Keep progress data
-            attachments: progress.progressAgendaToProgressAttachment, // Extract and flatten attachments
-            progressAgendaToProgressAttachment: undefined
-        }))
-    };
+            attachments: progress.progressAttachment, // Extract and flatten attachments
+            progressAttachment: undefined
+        })),
+        users: res?.agendaToUser.map(it => ({
+            userKegiatanId: it.userKegiatanId,
+            ...it.userToKegiatans.users
+        })),
+
+        agendaToUser: undefined
+    } : undefined
 }
 
 // internal only
@@ -143,27 +193,47 @@ export async function createProgressAgenda(dataProgress: ProgressAgendaDataType,
     return await fetchAgenda(dataProgress.agendaId)
 }
 
-export async function createAgenda(dataAgenda: AgendaKegiatanDataType) {
-    await db.insert(agendaKegiatans)
-        .values(addTimestamps(dataAgenda))
+export async function createAgenda(dataAgenda: AgendaKegiatanDataType, listUiduserKegiatan?: string[]) {
+    let id: any
+    await db.transaction(async (tx) => {
+        [id] = await tx.insert(agendaKegiatans).values(addTimestamps(dataAgenda)).$returningId()
 
-    return await fetchAgendaByKegiatan(dataAgenda.kegiatanId)
+        if (listUiduserKegiatan) {
+            const what = listUiduserKegiatan.map((it) => {
+                return addTimestamps({
+                    agendaId: id.agendaId,
+                    userKegiatanId: it
+                })
+            })
+            await tx.insert(agendaToUsersKegiatans).values(addTimestamps(what))
+        }
+
+    })
+
+    return await fetchAgenda(id.agendaId)
 }
 
-export async function updateAgenda(uidAgenda: string, dataAgenda: Partial<AgendaKegiatanDataType>) {
-    const prepared = db.select({ kegiatanId: agendaKegiatans.kegiatanId })
-        .from(agendaKegiatans)
-        .where(
-            eq(agendaKegiatans.agendaId, sql.placeholder('uidAgenda'))
-        )
-        .prepare()
-
+export async function updateAgenda(uidAgenda: string, dataAgenda: Partial<AgendaKegiatanDataType>, listUiduserKegiatan?: string[]) {
     await db.update(agendaKegiatans)
         .set(addTimestamps(dataAgenda, true))
         .where(eq(agendaKegiatans.agendaId, uidAgenda))
 
-    const [data] = await prepared.execute({ uidAgenda })
-    return await fetchAgendaByKegiatan(data.kegiatanId)
+    if (listUiduserKegiatan) {
+        const what = listUiduserKegiatan.map((it) => {
+            return addTimestamps({
+                agendaId: agendaKegiatans.agendaId,
+                userKegiatanId: it
+            })
+        })
+        await db.insert(agendaToUsersKegiatans).values(what).onDuplicateKeyUpdate({
+            set: {
+                agendaId: sql`values(${agendaToUsersKegiatans.agendaId})`,
+                userKegiatanId: sql`values(${agendaToUsersKegiatans.userKegiatanId})`
+            }
+        })
+    }
+
+    return await fetchAgenda(uidAgenda)
 }
 
 export async function updateProgress(uidProgress: string, dataProgress: Partial<ProgressAgendaDataType>, dataAttachment?: ProgressAttachmentDataType[]) {
@@ -213,6 +283,17 @@ export async function updateProgress(uidProgress: string, dataProgress: Partial<
         .prepare()
     const [data] = await prepared.execute({ uidProgress })
     return await fetchAgenda(data.agendaId)
+}
+
+export async function deleteUserFromAgenda(uidAgenda: string, uidUserKegiatan: string) {
+    await db.delete(agendaToUsersKegiatans).where(
+        and(
+            eq(agendaToUsersKegiatans.userKegiatanId, uidUserKegiatan),
+            eq(agendaToUsersKegiatans.agendaId, uidAgenda)
+        )
+    )
+
+    return await fetchAgenda(uidAgenda)
 }
 
 export async function deleteAgenda(uidAgenda: string) {

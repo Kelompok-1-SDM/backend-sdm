@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { createResponse } from "../utils/utils";
-import * as penugasanServices from '../services/penugasanService'
+import * as jabatanServices from '../services/jabatanService'
 
-export async function fetchPenugasanByKegiatan(req: Request, res: Response) {
+export async function fetchJabatan(req: Request, res: Response) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
@@ -15,26 +15,26 @@ export async function fetchPenugasanByKegiatan(req: Request, res: Response) {
         return
     }
 
+    const { uid: uidJabatan } = req.query
+    let data: any
+
     try {
-        let { uid_kegiatan: uidKegiatan, uid_user: uidUser } = req.query
-
-        if (uidUser === "") {
-            uidUser = req.user?.userId
-        }
-
-        const data = await penugasanServices.fetchPenugasanOnKegiatan(uidKegiatan as string, uidUser as string)
-
-        if (data === "penugasan_is_not_found") {
-            res.status(404).json(createResponse(false, null, "Kegiatan not found"))
+        if (uidJabatan) {
+            data = await jabatanServices.fetchJabatan(uidJabatan as string)
         } else {
-            res.status(200).json(createResponse(
-                true,
-                data,
-                "OK"
-            ));
+            data = await jabatanServices.fetchAllJabatan()
         }
 
+        if (data === "kegiatan_is_not_found") {
+            res.status(404).json(createResponse(false, null, "Kegiatan not found"))
+            return
+        }
 
+        res.status(200).json(createResponse(
+            true,
+            data,
+            "OK"
+        ));
     } catch (err) {
         if (err instanceof Error) {
             res.status(500).json(createResponse(
@@ -45,7 +45,6 @@ export async function fetchPenugasanByKegiatan(req: Request, res: Response) {
             return
         }
 
-
         console.log(err)
         res.status(500).json(createResponse(
             false,
@@ -55,7 +54,7 @@ export async function fetchPenugasanByKegiatan(req: Request, res: Response) {
     }
 }
 
-export async function tugaskanKegiatan(req: Request, res: Response) {
+export async function createJabatan(req: Request, res: Response) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
@@ -67,12 +66,10 @@ export async function tugaskanKegiatan(req: Request, res: Response) {
         return
     }
 
+    const { nama_jabatan: namaJabatan, is_pic: isPic } = req.body
+
     try {
-        const { list_user_ditugaskan: listUserDitugaskan } = req.body
-        const { uid_kegiatan: uidKegiatan } = req.query
-
-        const data = await penugasanServices.tugaskanKegiatan(uidKegiatan as string, listUserDitugaskan)
-
+        const data = await jabatanServices.createJabatan({ namaJabatan, isPic })
         res.status(200).json(createResponse(
             true,
             data,
@@ -80,18 +77,11 @@ export async function tugaskanKegiatan(req: Request, res: Response) {
         ));
     } catch (err) {
         if (err instanceof Error) {
-            if (err.message.toLowerCase().includes('references `users`')) {
-                res.status(404).json(createResponse(
+            if (err.message.toLowerCase().includes('duplicate')) {
+                res.status(422).json(createResponse(
                     false,
                     null,
-                    "One of user uid of not found, bad relationship"
-                ))
-                return
-            } else if (err.message.toLowerCase().includes('references `kegiatan`')) {
-                res.status(404).json(createResponse(
-                    false,
-                    null,
-                    "Kegiatan uid was not found, bad relationship"
+                    "Jabatan is duplicated"
                 ))
                 return
             } else {
@@ -111,9 +101,10 @@ export async function tugaskanKegiatan(req: Request, res: Response) {
             "Mbuh mas"
         ))
     }
-}
 
-export async function updatePenugasanKegiatan(req: Request, res: Response) {
+};
+
+export async function updateJabatan(req: Request, res: Response) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
@@ -125,74 +116,59 @@ export async function updatePenugasanKegiatan(req: Request, res: Response) {
         return
     }
 
-    try {
-        const { list_user_ditugaskan: listUserDitugaskan } = req.body
-        const { uid_kegiatan: uidKegiatan } = req.query
-
-        const data = await penugasanServices.updatePenugasanKegiatan(uidKegiatan as string, listUserDitugaskan)
-
-        res.status(200).json(createResponse(
-            true,
-            data,
-            "OK"
-        ));
-    } catch (err) {
-        if (err instanceof Error) {
-            if (err.message.toLowerCase().includes('references `users`')) {
-                res.status(404).json(createResponse(
-                    false,
-                    null,
-                    "One of user uid of not found, bad relationship"
-                ))
-                return
-            } else if (err.message.toLowerCase().includes('references `kegiatan`')) {
-                res.status(404).json(createResponse(
-                    false,
-                    null,
-                    "Kegiatan uid was not found, bad relationship"
-                ))
-                return
-            } else {
-                res.status(500).json(createResponse(
-                    false,
-                    process.env.NODE_ENV === 'development' ? err.stack : null,
-                    err.message || 'An unknown error occurred!'
-                ))
-                return
-            }
-        }
-
-        console.log(err)
-        res.status(500).json(createResponse(
-            false,
-            null,
-            "Mbuh mas"
-        ))
-    }
-}
-
-export async function deletePenugasan(req: Request, res: Response) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        res.status(400).json(createResponse(
-            false,
-            null,
-            "Input error",
-            errors.array()
-        ));
-        return
-    }
-
-    const { uid_kegiatan: uidKegiatan, uid_user: uidUser } = req.query
+    const { nama_jabatan: namaJabatan, is_pic: isPic } = req.body
+    const { uid } = req.query
 
     try {
-        const data = await penugasanServices.deletePenugasan(uidKegiatan as string, uidUser as string)
-
-        if (data === "kegiatan_is_not_found") {
-            res.status(404).json(createResponse(false, null, "Kegiatan not found"))
+        const data = await jabatanServices.updateJabatan(uid as string, { namaJabatan, isPic })
+        if (data === "jabatan_is_not_found") {
+            res.status(404).json(createResponse(false, null, "Jabatan not found"))
             return
-        } else if (data === "user_is_not_found") {
-            res.status(404).json(createResponse(false, null, "User is not found"))
+        }
+
+        res.status(200).json(createResponse(
+            true,
+            data,
+            "OK"
+        ));
+    } catch (err) {
+        if (err instanceof Error) {
+            res.status(500).json(createResponse(
+                false,
+                process.env.NODE_ENV === 'development' ? err.stack : null,
+                err.message || 'An unknown error occurred!'
+            ))
+            return
+        }
+
+        console.log(err)
+        res.status(500).json(createResponse(
+            false,
+            null,
+            "Mbuh mas"
+        ))
+    }
+}
+
+export async function deleteUser(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.status(400).json(createResponse(
+            false,
+            null,
+            "Input error",
+            errors.array()
+        ));
+        return
+    }
+
+    const { uid } = req.query
+
+    try {
+        const data = await jabatanServices.deleteJabatan(uid as string)
+
+        if (data === "jabatan_is_not_found") {
+            res.status(404).json(createResponse(false, null, "Jabatan not found"))
             return
         }
 

@@ -17,18 +17,13 @@ async function fetchKegiatanWithLampiran(uidKegiatan: string) {
     const prepared = db.query.kegiatans.findFirst({
         where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
         with: {
-            lampiranKegiatan: true
+            lampiran: true
         }
     }).prepare()
 
     const dat = await prepared.execute({ uidKegiatan })
 
-    return {
-        ...dat,
-        lampiran: dat?.lampiranKegiatan,
-
-        lampiranKegiatan: undefined
-    }
+    return dat
 }
 
 export async function createLampiran(dataLampiran: LampiranDataType[]) {
@@ -44,7 +39,7 @@ export async function createLampiran(dataLampiran: LampiranDataType[]) {
 export async function deleteLampiranKegiatan(uidLampiran: string) {
     const prepared = db.select({ kegiatanId: lampiranKegiatans.kegiatanId }).from(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, sql.placeholder("uidLampiran"))).prepare()
     const [temp] = await prepared.execute({ uidLampiran })
-    
+
     await db.delete(lampiranKegiatans).where(eq(lampiranKegiatans.lampiranId, uidLampiran))
 
     return await fetchKegiatanWithLampiran(temp.kegiatanId)
