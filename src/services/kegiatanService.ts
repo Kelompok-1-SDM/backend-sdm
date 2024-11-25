@@ -21,9 +21,9 @@ export async function fetchKegiatan(uidKegiatan: string) {
     return temp
 }
 
-export async function createKegiatan(kegiatanData: kegiatanModels.KegiatanDataType, listKompetensiUid: string[]) {
+export async function createKegiatan(kegiatanData: kegiatanModels.KegiatanDataType) {
 
-    const keg = await kegiatanModels.createKegiatan(kegiatanData, listKompetensiUid)
+    const keg = await kegiatanModels.createKegiatan(kegiatanData)
 
     // Create chatroom
     const chtRoom = new ChatRoom(addTimestamps({
@@ -34,7 +34,11 @@ export async function createKegiatan(kegiatanData: kegiatanModels.KegiatanDataTy
     return keg
 }
 
-export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<kegiatanModels.KegiatanDataType>, listKompetensiUid: string[]) {
+export async function addKegiatanKompetensi(uidKegiatan: string, listKompetensi: string[]) {
+    return kegiatanModels.addKegiatanKompetensi(uidKegiatan, listKompetensi)
+}
+
+export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<kegiatanModels.KegiatanDataType>) {
     const temp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
     if (!temp || Object.keys(temp).length === 0) return "kegiatan_is_not_found"
 
@@ -51,7 +55,7 @@ export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<
 
     }
 
-    return await kegiatanModels.updateKegiatan(uidKegiatan, dataKegiatan, listKompetensiUid)
+    return await kegiatanModels.updateKegiatan(uidKegiatan, dataKegiatan)
 }
 
 export async function deleteKegiatan(uidKegiatan: string) {
@@ -65,8 +69,8 @@ export async function deleteKegiatan(uidKegiatan: string) {
     return ap
 }
 
-export async function deleteKompetensiKegiatan(uidKegiatan: string, uidKompetensi: string) {
-    const ap = await kegiatanModels.deleteKommpetensiFromkegiatan(uidKegiatan, uidKompetensi)
+export async function deleteKompetensiKegiatan(uidKegiatan: string, listKompetensi: string[]) {
+    const ap = await kegiatanModels.deleteKommpetensiFromkegiatan(uidKegiatan, listKompetensi)
     if (!ap || Object.keys(ap).length === 0) return "kegiatan_is_not_found"
 
     return ap

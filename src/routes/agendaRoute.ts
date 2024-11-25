@@ -48,7 +48,7 @@ router.put('/', authorize(['admin', 'manajemen', 'dosen']), [
     body('nama_agenda').optional().notEmpty().withMessage("This key should be not empty"),
     body('deskripsi_agenda').isString().optional().trim().withMessage('This key is optional and is string'),
     body('deskripsi_agenda').optional().notEmpty().withMessage("This key should be not empty"),
-    body('is_done').isBoolean().optional().toBoolean().withMessage("List tugaskan(role) are 'rencana', 'jalan', 'selesai'"),
+    body('is_done').isBoolean().toBoolean().optional().withMessage("List tugaskan(role) are 'rencana', 'jalan', 'selesai'"),
     body('is_done').optional().notEmpty().withMessage("This key should be not empty"),
     body('list_uid_user_kegiatan')
         .isArray().optional().withMessage('List user ditugaskan must be an array')

@@ -37,7 +37,7 @@ export const authorize = (requiredRoles: ('admin' | 'manajemen' | 'dosen')[]) =>
                 res.status(401).json(createResponse(
                     false,
                     null,
-                    "User not found"
+                    "User not found, your not authorized"
                 ));
                 return
             }

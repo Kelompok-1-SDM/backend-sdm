@@ -53,10 +53,13 @@ router.post('/import', authorize(['admin']),
 router.post('/kompetensi', authorize(['admin']), [
     query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
-    body('list_kompetensi').isArray().withMessage('List kompetensi must be an array'),
-    body('list_kompetensi').notEmpty().withMessage("This key should not be empty"),
-    body('list_kompetensi.*').isString().trim().withMessage('List kompetensi(element) must be an string'),
-    body('list_kompetensi.*').notEmpty().withMessage("This key should not be empty")
+    body('list_kompetensi')
+        .isArray().withMessage('List kompetensi must be an array')
+        .bail()
+        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
+    body('list_kompetensi.*')
+        .isString().trim().withMessage('Each komp in the list must be a string')
+        .notEmpty().withMessage('kompetensiId cannot be empty'),
 ], userController.addUserKompetensi);
 
 router.put('/', authorize(['admin', 'manajemen', 'dosen']),
@@ -84,10 +87,13 @@ router.delete('/', authorize(['admin']), [
 router.delete('/kompetensi', authorize(['admin']), [
     query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
-    body('list_kompetensi').isArray().optional().withMessage('List kompetensi must be an array'),
-    body('list_kompetensi').optional().notEmpty().withMessage("This key should not be empty"),
-    body('list_kompetensi.*').isString().trim().withMessage('List kompetensi(element) must be an string'),
-    body('list_kompetensi.*').notEmpty().withMessage("This key should not be empty")
+    body('list_kompetensi')
+        .isArray().withMessage('List kompetensi must be an array')
+        .bail()
+        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
+    body('list_kompetensi.*')
+        .isString().trim().withMessage('Each komp in the list must be a string')
+        .notEmpty().withMessage('kompetensiId cannot be empty'),
 ], userController.deleteUserKompetensi);
 
 

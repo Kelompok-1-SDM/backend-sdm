@@ -242,7 +242,7 @@ export async function fetchKegiatanByUid(uidKegiatan: string) {
     let kegiatan = await prepared.execute({ uidKegiatan })
 
     if (!kegiatan) return undefined
-    
+
     return {
         ...kegiatan,
         agenda: kegiatan.agenda.map((it) => {
@@ -281,25 +281,35 @@ export async function fetchKegiatanOnly(uidKegiatan: string) {
     const prepared = db.query.kegiatans.findFirst({
         where: ((kegiatans, { eq }) => eq(kegiatans.kegiatanId, sql.placeholder('uidKegiatan'))),
         with: {
-            kompetensi: true
+            kompetensi: {
+                with: {
+                    kompetensis: true
+                }
+            }
         }
     }).prepare()
     const kegiatan = await prepared.execute({ uidKegiatan })
 
-    return kegiatan
+    return kegiatan ? {
+        ...kegiatan,
+        kompetensi: kegiatan.kompetensi.map(it => (it.kompetensis))
+    } : undefined
 }
 
-export async function createKegiatan(kegiatanData: KegiatanDataType, listKompetensiUid: string[]) {
+export async function createKegiatan(kegiatanData: KegiatanDataType) {
     let idKegiatan: { kegiatanId: string };
+    [idKegiatan] = await db.insert(kegiatans).values(addTimestamps(kegiatanData)).$returningId()
 
+    return await fetchKegiatanOnly(idKegiatan!.kegiatanId)
+}
+
+export async function addKegiatanKompetensi(uidKegiatan: string, listKompetensi: string[]) {
     await db.transaction(async (tx) => {
-        [idKegiatan] = await tx.insert(kegiatans).values(addTimestamps(kegiatanData)).$returningId()
-
-        for (let i = 0; i < listKompetensiUid.length; i += batchQuerySize) {
-            let batch: any[] = listKompetensiUid.slice(i, i + batchQuerySize);
+        for (let i = 0; i < listKompetensi.length; i += batchQuerySize) {
+            let batch: any[] = listKompetensi.slice(i, i + batchQuerySize);
             batch = batch.map((tex) => {
                 return addTimestamps({
-                    kegiatanId: idKegiatan.kegiatanId,
+                    kegiatanId: uidKegiatan,
                     kompetensiId: tex
                 })
             })
@@ -307,32 +317,13 @@ export async function createKegiatan(kegiatanData: KegiatanDataType, listKompete
         }
     })
 
-    return await fetchKegiatanOnly(idKegiatan!.kegiatanId)
+    return await fetchKegiatanOnly(uidKegiatan)
 }
 
-export async function updateKegiatan(uidKegiatan: string, data: Partial<KegiatanDataType>, listKompetensiUid: string[]) {
-    await db.transaction(async (tx) => {
-        await tx.update(kegiatans)
-            .set(addTimestamps(data, true))
-            .where(eq(kegiatans.kegiatanId, uidKegiatan))
-
-        if (listKompetensiUid && listKompetensiUid.length !== 0) {
-            for (let i = 0; i < listKompetensiUid.length; i += batchQuerySize) {
-                let batch: any[] = listKompetensiUid.slice(i, i + batchQuerySize);
-                batch = batch.map((tex) => {
-                    return addTimestamps({
-                        kegiatanId: uidKegiatan,
-                        kompetensiId: tex
-                    })
-                })
-                await tx.insert(kompetensisToKegiatans).values(batch).onDuplicateKeyUpdate({
-                    set: {
-                        kegiatanId: sql`values(${kompetensisToKegiatans.kegiatanId})`,
-                    }
-                })
-            }
-        }
-    })
+export async function updateKegiatan(uidKegiatan: string, data: Partial<KegiatanDataType>) {
+    await db.update(kegiatans)
+        .set(addTimestamps(data, true))
+        .where(eq(kegiatans.kegiatanId, uidKegiatan))
 
     return await fetchKegiatanOnly(uidKegiatan)
 }
@@ -345,8 +336,13 @@ export async function deleteKegiatan(uidKegiatan: string) {
     return keg
 }
 
-export async function deleteKommpetensiFromkegiatan(uidKegiatan: string, uidKompetensi: string) {
-    await db.delete(kompetensisToKegiatans).where(and(eq(kompetensisToKegiatans.kegiatanId, uidKegiatan), eq(kompetensisToKegiatans.kompetensiId, uidKompetensi)))
+export async function deleteKommpetensiFromkegiatan(uidKegiatan: string, listKompetensi: string[]) {
+    await db.transaction(async (tx) => {
+        await Promise.all(listKompetensi.map(async (it) => {
+            await tx.delete(kompetensisToKegiatans)
+                .where(and(eq(kompetensisToKegiatans.kegiatanId, uidKegiatan), eq(kompetensisToKegiatans.kompetensiId, it)))
+        }))
+    })
 
     return await fetchKegiatanOnly(uidKegiatan)
 }

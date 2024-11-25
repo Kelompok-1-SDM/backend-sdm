@@ -26,8 +26,15 @@ router.post('/', authorize(['admin', 'manajemen']), [
     body('tanggal_mulai').notEmpty().withMessage("This key should not be empty"),
     body('tanggal_akhir').isISO8601().trim().toDate().withMessage('This key is required and is ISO8601'),
     body('tanggal_akhir').notEmpty().withMessage("This key should not be empty"),
+    body('is_done').isBoolean().optional().toBoolean().withMessage('This key is required and is Boolean'),
+    body('is_done').optional().notEmpty().withMessage("This key should not be empty"),
     body('deskripsi').isString().trim().withMessage("This key is required and it's string"),
-    body('deskripsi').notEmpty().withMessage("This key should not be empty"),
+    body('deskripsi').notEmpty().withMessage("This key should not be empty")
+], kegiatanController.createKegiatan)
+
+router.post('/kompetensi', authorize(['admin', 'manajemen']), [
+    query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
+    query('uid').notEmpty().withMessage("This key should not be empty"),
     body('list_kompetensi')
         .isArray().withMessage('List kompetensi must be an array')
         .bail()
@@ -35,7 +42,7 @@ router.post('/', authorize(['admin', 'manajemen']), [
     body('list_kompetensi.*')
         .isString().trim().withMessage('Each komp in the list must be a string')
         .notEmpty().withMessage('kompetensiId cannot be empty'),
-], kegiatanController.createKegiatan)
+], kegiatanController.addKegiatanKompetensi)
 
 router.put('/', authorize(['admin', 'manajemen']), [
     query('uid').isString().trim().withMessage("This key is required and it's string"),
@@ -50,15 +57,10 @@ router.put('/', authorize(['admin', 'manajemen']), [
     body('tanggal_mulai').optional().notEmpty().withMessage("This key should not be empty"),
     body('tanggal_akhir').isISO8601().optional().trim().toDate().withMessage('This key is required and is ISO8601'),
     body('tanggal_akhir').optional().notEmpty().withMessage("This key should not be empty"),
+    body('is_done').isBoolean().optional().toBoolean().withMessage('This key is required and is Boolean'),
+    body('is_done').optional().notEmpty().withMessage("This key should not be empty"),
     body('deskripsi').isString().optional().trim().withMessage("This key is required and it's string"),
     body('deskripsi').optional().notEmpty().withMessage("This key should not be empty"),
-    body('list_kompetensi')
-        .isArray().optional().withMessage('List kompetensi must be an array')
-        .bail()
-        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
-    body('list_kompetensi.*')
-        .isString().optional().trim().withMessage('Each komp in the list must be a string')
-        .notEmpty().withMessage('kompetensiId cannot be empty'),
 ], kegiatanController.updateKegiatan)
 
 router.delete('/', authorize(['admin', 'manajemen']), [
@@ -69,8 +71,13 @@ router.delete('/', authorize(['admin', 'manajemen']), [
 router.delete('/kompetensi', authorize(['admin', 'manajemen']), [
     query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
-    query('uid_kompetensi').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
-    query('uid_kompetensi').notEmpty().withMessage("This key should not be empty"),
+    body('list_kompetensi')
+        .isArray().withMessage('List kompetensi must be an array')
+        .bail()
+        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
+    body('list_kompetensi.*')
+        .isString().trim().withMessage('Each komp in the list must be a string')
+        .notEmpty().withMessage('kompetensiId cannot be empty'),
 ], kegiatanController.deleteKompetensiKegiatan)
 
 
