@@ -19,7 +19,8 @@ export async function fetchKegiatanWithUser(uidKegiatan: string, uidUser?: strin
             uidUser ? eq(usersToKegiatans.userId, sql.placeholder('uidUser')) : undefined
         )),
         with: {
-            jabatans: true
+            jabatans: true,
+            users: true
         }
     }).prepare()
 
@@ -29,7 +30,10 @@ export async function fetchKegiatanWithUser(uidKegiatan: string, uidUser?: strin
         return {
             ...it,
             namaJabatan: it.jabatans.namaJabatan,
-            jabatans: undefined
+            isPic: it.jabatans.isPic,
+            nama: it.users.nama,
+            jabatans: undefined,
+            users: undefined
         }
     })
 

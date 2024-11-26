@@ -145,6 +145,7 @@ export async function addJumlahKegiatan(uidUser: string, wasDecrement: boolean =
             jumlahKegiatan: 1,
         })).onDuplicateKeyUpdate({
             set: addTimestamps({
+                userId: sql`${jumlahKegiatan.userId}`,
                 jumlahKegiatan: sql`${jumlahKegiatan.jumlahKegiatan} + ${wasDecrement ? -1 : 1}`
             }, true)
         })

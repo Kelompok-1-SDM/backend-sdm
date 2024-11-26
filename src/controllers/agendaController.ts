@@ -203,7 +203,7 @@ export async function updateAgenda(req: Request, res: Response) {
     }
 
     const { uid: uidAgenda } = req.query
-    let { kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, is_done: isDone, list_user_kegiatan: listUserKegiatan } = req.body
+    let { kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, is_done: isDone, list_uid_user_kegiatan: listUserKegiatan } = req.body
 
 
     if (req.user?.role === 'dosen') {
@@ -220,6 +220,15 @@ export async function updateAgenda(req: Request, res: Response) {
 
     try {
         const data = await agendaServices.updateAgenda(uidAgenda as string, { kegiatanId: (uidKegiatan as string), jadwalAgenda, namaAgenda, deskripsiAgenda, isDone }, listUserKegiatan)
+
+        if (data === 'agenda_is_not_found') {
+            res.status(404).json(createResponse(
+                false,
+                null,
+                "Agenda is not found"
+            ));
+            return
+        }
 
         res.status(200).json(createResponse(
             true,

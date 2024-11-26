@@ -39,7 +39,7 @@ export async function createProgressAgenda(dataProgress: agendaModels.ProgressAg
 
 export async function updateAgenda(uidAgenda: string, dataAgenda: agendaModels.AgendaKegiatanDataType, listUiduserKegiatan: string[]) {
     // TODO Do ntoofication`
-
+    
     const ap = await agendaModels.fetchAgenda(uidAgenda)
     if (!ap || Object.keys(ap).length === 0) return "agenda_is_not_found"
 

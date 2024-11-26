@@ -221,7 +221,7 @@ export async function updateAgenda(uidAgenda: string, dataAgenda: Partial<Agenda
     if (listUiduserKegiatan) {
         const what = listUiduserKegiatan.map((it) => {
             return addTimestamps({
-                agendaId: agendaKegiatans.agendaId,
+                agendaId: uidAgenda,
                 userKegiatanId: it
             })
         })
