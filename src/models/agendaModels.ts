@@ -14,7 +14,11 @@ export async function fetchProgress(uidProgress: string) {
     const prepared = db.query.progressAgenda.findFirst({
         where: ((progressAgenda, { eq }) => eq(progressAgenda.progressId, sql.placeholder('uidProgress'))),
         with: {
-            progressAttachment: true,
+            progressAttachment: {
+                with: {
+                    attachment: true
+                }
+            },
         }
     }).prepare()
 
@@ -22,7 +26,7 @@ export async function fetchProgress(uidProgress: string) {
 
     return res ? {
         ...res, // Keep the agendaKegiatans (agenda) data
-        attachments: res?.progressAttachment, // Extract and flatten attachments
+        attachments: res?.progressAttachment.map(it => (it.attachment)), // Extract and flatten attachments
         progressAttachment: undefined
     } : undefined
 }
@@ -95,7 +99,11 @@ export async function fetchAgenda(uidAgenda: string) {
             progress: {
                 orderBy: ((progressAgenda, { desc }) => [desc(progressAgenda.createdAt)]),
                 with: {
-                    progressAttachment: true
+                    progressAttachment: {
+                        with: {
+                            attachment: true
+                        }
+                    }
                 }
             },
             agendaToUser: {
@@ -124,7 +132,7 @@ export async function fetchAgenda(uidAgenda: string) {
         ...res, // Keep the agendaKegiatans (agenda) data
         progress: res?.progress.map(progress => ({
             ...progress, // Keep progress data
-            attachments: progress.progressAttachment, // Extract and flatten attachments
+            attachments: progress.progressAttachment.map(it => (it.attachment)), // Extract and flatten attachments
             progressAttachment: undefined
         })),
         users: res?.agendaToUser.map(it => ({
@@ -305,7 +313,7 @@ export async function deleteAgenda(uidAgenda: string) {
 
 export async function deleteProgress(uidProgress: string) {
     const dat = await fetchProgress(uidProgress)
-    await db.delete(progressAgenda).where(eq(progressAgenda.agendaId, uidProgress))
+    await db.delete(progressAgenda).where(eq(progressAgenda.progressId, uidProgress))
 
     return dat
 }

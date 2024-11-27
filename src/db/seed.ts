@@ -432,6 +432,7 @@ const seedAgendaProgressAndAttachments = async () => {
                     // Add attachment entry
                     allAttachmentSeeds.push({
                         attachmentId,
+                        nama: faker.lorem.words(2),
                         hash: attachmentId, // Assuming hash is the same as the unique ID
                         url: faker.internet.url(),
                         createdAt,

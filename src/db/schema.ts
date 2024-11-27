@@ -311,7 +311,8 @@ export const progressAgendaRelations = relations(progressAgenda, ({ one, many })
 export const progressAttachments = mysqlTable('progress_attachment', {
     attachmentId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),
 
-    hash: varchar({ length: 24 }).notNull().unique(),
+    nama: varchar({ length: 255 }).notNull(),
+    hash: varchar({ length: 32 }).notNull().unique(),
     url: longtext().notNull(),
 
     ...timestampsHelper
