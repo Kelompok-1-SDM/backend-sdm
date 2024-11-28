@@ -27,7 +27,7 @@ export async function fetchAgenda(req: Request, res: Response) {
         } else {
             let wasMePic;
             if (req.user?.role === 'dosen') {
-                const wasAllowed = await fetchUserJabatanInKegiatan(data.agendaId, req.user!.userId as string)
+                const wasAllowed = await fetchUserJabatanInKegiatan(data.kegiatanId, req.user!.userId as string)
                 if (!wasAllowed) {
                     res.status(401).json(createResponse(
                         false,
