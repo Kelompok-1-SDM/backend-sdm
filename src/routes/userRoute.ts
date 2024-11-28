@@ -22,7 +22,7 @@ router.get('/homepage-web', authorize(['admin', 'manajemen'])
     , userController.fetchWebHomepage)
 
 router.get('/statistic', authorize(['admin', 'manajemen', 'dosen']), [
-    query('uid').isString().trim().toLowerCase().withMessage("This key is optional and it's string"),
+    query('uid').isString().optional().trim().toLowerCase().withMessage("This key is optional and it's string"),
     query('year').isNumeric().optional().trim().toLowerCase().withMessage("This key is optional and it's numeric"),
     query('year').optional().notEmpty().withMessage("This key should not be empty"),
 ], userController.fetchUserStatistic)
