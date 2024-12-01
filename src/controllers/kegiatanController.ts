@@ -26,7 +26,7 @@ export async function fetchKegiatan(req: Request, res: Response) {
     try {
         if (uidUser) {
             if (isDone || tanggal) {
-                data = await kegiatanService.fetchKegiatanByUser(uidUser as string, Boolean(isDone), tanggal as string)
+                data = await kegiatanService.fetchKegiatanByUser(uidUser as string, isDone == 'true' ? true : false, tanggal as string)
             }
             else {
                 data = await kegiatanService.fetchKegiatanByUser(uidUser as string)

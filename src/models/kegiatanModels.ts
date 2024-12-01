@@ -125,7 +125,7 @@ export async function fetchKegiatanCountAll() {
     return res.count
 }
 
-export async function fetchKegiatanByUser(uidUser: string, isDone?: boolean, tanggal?: string, wasLimitedTwo: boolean = false) {
+export async function fetchKegiatanByUser(uidUser: string, isDone: boolean = false, tanggal?: string, wasLimitedTwo: boolean = false) {
     const formattedTanggal = tanggal ? new Date(tanggal).toISOString().split('T')[0] : undefined;
 
     const prepared2 = db
@@ -140,7 +140,7 @@ export async function fetchKegiatanByUser(uidUser: string, isDone?: boolean, tan
         .where(
             and(
                 eq(usersToKegiatans.userId, sql.placeholder("uidUser")),
-                isDone ? eq(kegiatans.isDone, sql.placeholder("isDone")) : undefined,
+                eq(kegiatans.isDone, sql.placeholder("isDone")),
                 tanggal
                     ? eq(sql`DATE(${kegiatans.tanggalMulai})`, sql.placeholder("tanggal"))
                     : undefined
