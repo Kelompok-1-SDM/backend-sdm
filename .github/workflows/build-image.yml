@@ -28,7 +28,7 @@ jobs:
         with:
           ref: main
           sparse-checkout: |
-            MuslimProScrapper
+            main
 
       - name: Prepare
         run: |
