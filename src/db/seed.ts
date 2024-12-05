@@ -1,10 +1,10 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import {
-    users, kompetensis, kegiatans, usersToKompetensis, usersToKegiatans,
-    jumlahKegiatan, lampiranKegiatans, agendaKegiatans, kompetensisToKegiatans,
-    progressAgenda, progressAttachments, progressAgendaToProgressAttachment,
-    jabatanAnggota,
-    agendaToUsersKegiatans
+    users, kegiatans, usersToKegiatans, jumlahKegiatan,
+    lampiranKegiatans, agendaKegiatans, progressAgenda,
+    progressAttachments, progressAgendaToProgressAttachment,
+    jabatanAnggota, agendaToUsersKegiatans,
+    tipeKegiatan
 } from './schema';
 import { faker } from '@faker-js/faker';
 import mysql from "mysql2/promise";
@@ -94,18 +94,6 @@ const seedUsers = async () => {
     console.log(`Seeded ${userSeeds.length} users from Excel data`);
 };
 
-// Seed for 'kompetensis' table
-const seedKompetensis = async () => {
-    const kompetensiSeeds = Array.from({ length: 30 }).map(() => ({
-        namaKompetensi: `${faker.internet.emoji({ types: ['object', 'symbol'] })} ${faker.lorem.words(1)}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
-
-    await db.insert(kompetensis).values(kompetensiSeeds);
-    console.log(`Seeded ${kompetensiSeeds.length} kompetensis`);
-};
-
 // Seed for 'jabatan' table
 const seedJabatan = async () => {
     const jabatanSeeds = Array.from({ length: 5 }).map(() => ({
@@ -117,14 +105,24 @@ const seedJabatan = async () => {
     console.log(`Seeded ${jabatanSeeds.length} jabatan`)
 }
 
+const seedTipeKegiatan = async () => {
+    const tipeKegiatanSeeds = Array.from({ length: 5 }).map(() => ({
+        tipeKegiatan: faker.lorem.words(1),
+    }));
+
+    await db.insert(tipeKegiatan).values(tipeKegiatanSeeds)
+    console.log(`Seeded ${tipeKegiatanSeeds.length} tipe kegiatan`)
+}
+
 // Seed for 'kegiatans' table
 const seedKegiatans = async () => {
     // Seed 20 kegiatan records
+    const tipeKegiatanRecords = await db.select().from(tipeKegiatan);
     const kegiatanSeeds = Array.from({ length: 20 }).map(() => ({
+        tipeKegiatanId: faker.helpers.arrayElement(tipeKegiatanRecords).tipeKegiatanId,
         judul: faker.lorem.sentence(),
         tanggalMulai: faker.date.past(),
         tanggalAkhir: faker.date.soon(),
-        tipeKegiatan: faker.helpers.arrayElement(['jti', 'non-jti']),
         deskripsi: faker.lorem.paragraph(),
         lokasi: faker.location.city(),
         createdAt: new Date(),
@@ -134,9 +132,6 @@ const seedKegiatans = async () => {
     // Insert kegiatan records and get their IDs
     const insertedKegiatanIds = await db.insert(kegiatans).values(kegiatanSeeds).$returningId();
 
-    // Fetch all kompetensi records for random selection
-    const kompetensiRecords = await db.select().from(kompetensis);
-
     // For each kegiatan, assign random kompetensis
     await Promise.all(insertedKegiatanIds.map(async (kegiatanId: any) => {
         const apa = new ChatRoom({
@@ -145,68 +140,10 @@ const seedKegiatans = async () => {
             updatedAt: new Date(),
         })
         await apa.save()
-
-        const kompetensiCount = faker.number.int({ min: 1, max: 20 });
-        const assignedKompetensis = new Set();
-
-        while (assignedKompetensis.size < kompetensiCount) {
-            const randomKompetensiId = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
-
-            if (!assignedKompetensis.has(randomKompetensiId)) {
-                await db.insert(kompetensisToKegiatans).values({
-                    kegiatanId: kegiatanId.kegiatanId,
-                    kompetensiId: randomKompetensiId,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                });
-                assignedKompetensis.add(randomKompetensiId);
-            }
-        }
     }));
 
-    console.log(`Seeded ${kegiatanSeeds.length} kegiatans with kompetensi relationships`);
+    console.log(`Seeded ${kegiatanSeeds.length} kegiatans with tipeKegiatan relationships`);
 };
-
-const seedUsersToKompetensis = async () => {
-    const userRecords = await db.select().from(users);
-    const kompetensiRecords = await db.select().from(kompetensis);
-
-    for (const user of userRecords) {
-        // Randomize the number of kompetensis to assign to this user
-        if (user.role != 'dosen') {
-            continue
-        }
-        const kompetensiCount = faker.number.int({ min: 1, max: 20 });
-        const assignedKompetensis = new Set();
-
-        while (assignedKompetensis.size < kompetensiCount) {
-            const randomKompetensi = faker.helpers.arrayElement(kompetensiRecords).kompetensiId;
-
-            // Ensure the kompetensi isn't assigned multiple times for the same user
-            if (!assignedKompetensis.has(randomKompetensi)) {
-                const existingRecord = await db
-                    .select()
-                    .from(usersToKompetensis)
-                    .where(and(
-                        eq(usersToKompetensis.userId, user.userId),
-                        eq(usersToKompetensis.kompetensiId, randomKompetensi)
-                    ));
-
-                if (existingRecord.length === 0) {
-                    await db.insert(usersToKompetensis).values({
-                        userId: user.userId,
-                        kompetensiId: randomKompetensi,
-                    });
-                }
-
-                // Track the kompetensi assigned to avoid duplicates
-                assignedKompetensis.add(randomKompetensi);
-            }
-        }
-    }
-    console.log(`Seeded usersToKompetensis`);
-};
-
 
 // Seed for 'usersToKegiatans' junction table
 const seedUsersToKegiatans = async () => {
@@ -276,22 +213,7 @@ const seedUsersToKegiatans = async () => {
                         }
                     }
 
-                    const apa = await db.select().from(kompetensisToKegiatans).where(eq(kompetensisToKegiatans.kegiatanId, randomKegiatan.kegiatanId))
-                    const newListKompetensi = apa.map((asd) => {
-                        return asd.kompetensiId
-                    })
                     if (status == 'selesai') {
-                        for (const element of newListKompetensi) {
-                            await db.insert(usersToKompetensis).values({
-                                userId: user.userId,
-                                kompetensiId: element
-                            }).onDuplicateKeyUpdate({
-                                set: {
-                                    userId: sql`user_id`
-                                }
-                            })
-                        }
-
                         await db.insert(jumlahKegiatan)
                             .values({
                                 userId: user.userId,
@@ -473,13 +395,12 @@ const runSeeds = async () => {
         .catch((err) => console.log(err));
 
     await seedUsers();
-    await seedKompetensis();
+    await seedTipeKegiatan();
     await seedJabatan();
     await seedKegiatans();
     await seedUsersToKegiatans();
     await seedLampiranKegiatans();
     await seedAgendaKegiatans();
-    await seedUsersToKompetensis();
     await seedAgendaProgressAndAttachments()
     console.log('All seed data inserted');
     exit()

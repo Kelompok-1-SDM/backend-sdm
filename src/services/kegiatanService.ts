@@ -34,10 +34,6 @@ export async function createKegiatan(kegiatanData: kegiatanModels.KegiatanDataTy
     return keg
 }
 
-export async function addKegiatanKompetensi(uidKegiatan: string, listKompetensi: string[]) {
-    return kegiatanModels.addKegiatanKompetensi(uidKegiatan, listKompetensi)
-}
-
 export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<kegiatanModels.KegiatanDataType>) {
     const temp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
     if (!temp || Object.keys(temp).length === 0) return "kegiatan_is_not_found"
@@ -45,10 +41,9 @@ export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<
     if (dataKegiatan.isDone && dataKegiatan.isDone == true) {
         const listUser = await kegiatanModels.fetchKegiatanByUid(uidKegiatan)
         if (listUser?.users && listUser.users.length != 0) {
-            const kegKomp = await kegiatanModels.fetchKompetensiKegiatan(uidKegiatan)
+            const kegKomp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
             await Promise.all(listUser!.users.map(async (it) => {
-                await usersModels.addUserKompetensi(it.userId, kegKomp.kompetensi!)
-                await usersModels.addJumlahKegiatan(it.userId, undefined, kegKomp.tanggalMulai!.getFullYear(), kegKomp.tanggalMulai!.getMonth() + 1)
+                await usersModels.addJumlahKegiatan(it.userId, undefined, kegKomp!.tanggalMulai!.getFullYear(), kegKomp!.tanggalMulai!.getMonth() + 1)
 
             }))
         }
@@ -65,13 +60,6 @@ export async function deleteKegiatan(uidKegiatan: string) {
     // Rempve chatroom
     await ChatRoom.findOneAndDelete({ roomId: uidKegiatan })
     await Message.deleteMany({ roomId: uidKegiatan })
-
-    return ap
-}
-
-export async function deleteKompetensiKegiatan(uidKegiatan: string, listKompetensi: string[]) {
-    const ap = await kegiatanModels.deleteKommpetensiFromkegiatan(uidKegiatan, listKompetensi)
-    if (!ap || Object.keys(ap).length === 0) return "kegiatan_is_not_found"
 
     return ap
 }

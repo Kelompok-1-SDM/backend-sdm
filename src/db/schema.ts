@@ -27,7 +27,6 @@ export const users = mysqlTable('users', {
 
 export const usersRelations = relations(users, ({ many }) => ({
     kegiatans: many(usersToKegiatans),
-    kompetensis: many(usersToKompetensis),
     userToJumlahKegiatan: many(jumlahKegiatan),
     passwordReset: many(resetPassword)
 }));
@@ -64,70 +63,13 @@ export const usersFcmTokenRelations = relations(usersFcmToken, ({ one }) => ({
     })
 }))
 
-export const usersToKompetensis = mysqlTable('users_to_kompetensi', {
-    userId: varchar({ length: 24 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
-    kompetensiId: varchar({ length: 24 }).references(() => kompetensis.kompetensiId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
-
-    ...timestampsHelper
-}, (table) => {
-    return {
-        userIdx: index('users_index').on(table.userId),
-        pk: primaryKey({ columns: [table.userId, table.kompetensiId] })
-    }
-});
-
-export const usersToKompetensisRelations = relations(usersToKompetensis, ({ one }) => ({
-    users: one(users, {
-        fields: [usersToKompetensis.userId],
-        references: [users.userId],
-    }),
-    kompetensi: one(kompetensis, {
-        fields: [usersToKompetensis.kompetensiId],
-        references: [kompetensis.kompetensiId],
-    }),
-}));
-
-export const kompetensis = mysqlTable('kompetensi', {
-    kompetensiId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),
-    namaKompetensi: varchar({ length: 255 }).notNull().unique(),
-
-    ...timestampsHelper
-});
-
-export const kompetensiRelations = relations(kompetensis, ({ one }) => ({
-    users: one(usersToKompetensis),
-    kegiatans: one(kompetensisToKegiatans)
-}))
-
-export const kompetensisToKegiatans = mysqlTable('kompetensi_to_kegiatan', {
-    kompetensiId: varchar({ length: 24 }).references(() => kompetensis.kompetensiId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
-    kegiatanId: varchar({ length: 24 }).references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
-
-    ...timestampsHelper
-}, (table) => {
-    return {
-        kompetensiIdx: index('kompetensi_index').on(table.kompetensiId),
-        pk: primaryKey({ columns: [table.kompetensiId, table.kegiatanId] })
-    }
-});
-
-export const kompetensisToKegiatansRelations = relations(kompetensisToKegiatans, ({ one }) => ({
-    kompetensis: one(kompetensis, {
-        fields: [kompetensisToKegiatans.kompetensiId],
-        references: [kompetensis.kompetensiId],
-    }),
-    kegiatans: one(kegiatans, {
-        fields: [kompetensisToKegiatans.kegiatanId],
-        references: [kegiatans.kegiatanId],
-    }),
-}));
-
 export const kegiatans = mysqlTable('kegiatan', {
     kegiatanId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),
+    tipeKegiatanId: varchar({ length: 24 }).references(() => tipeKegiatan.tipeKegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+
     judul: varchar({ length: 255 }).notNull(),
     tanggalMulai: datetime().default(sql`CURRENT_TIMESTAMP`),
     tanggalAkhir: datetime().notNull(),
-    tipeKegiatan: mysqlEnum(['non-jti', 'jti']).default('jti'),
     isDone: boolean().default(false),
     lokasi: varchar({ length: 100 }).notNull(),
     deskripsi: text(),
@@ -141,12 +83,27 @@ export const kegiatans = mysqlTable('kegiatan', {
     }
 });
 
-export const kegiatanRelations = relations(kegiatans, ({ many }) => ({
+export const kegiatanRelations = relations(kegiatans, ({ many, one }) => ({
     users: many(usersToKegiatans),
     lampiran: many(lampiranKegiatans),
-    agenda: many(agendaKegiatans), // Fix relation name here
-    kompetensi: many(kompetensisToKegiatans)
+    agenda: many(agendaKegiatans),
+    tipeKegiatan: one(tipeKegiatan, {
+        fields: [kegiatans.tipeKegiatanId],
+        references: [tipeKegiatan.tipeKegiatanId]
+    }),
 }));
+
+export const tipeKegiatan = mysqlTable('tipe_kegiatan', {
+    tipeKegiatanId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),
+
+    tipeKegiatan: varchar({ length: 255 }).notNull(),
+
+    ...timestampsHelper
+})
+
+export const tipeKegiatanRelations = relations(tipeKegiatan, ({ many }) => ({
+    kegiatan: many(kegiatans)
+}))
 
 export const usersToKegiatans = mysqlTable('users_to_kegiatan', {
     userToKegiatanId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),

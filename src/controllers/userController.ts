@@ -338,63 +338,6 @@ export async function exportUserBatch(req: Request, res: Response) {
     }
 };
 
-export async function addUserKompetensi(req: Request, res: Response) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        res.status(400).json(createResponse(
-            false,
-            null,
-            "Input error",
-            errors.array()
-        ));
-        return
-    }
-
-    const { list_kompetensi: listKompetensi } = req.body
-    const { uid: uidUser } = req.query
-
-    try {
-        const data = await userService.addUserKompetensi(uidUser as string, listKompetensi)
-        res.status(200).json(createResponse(
-            true,
-            data,
-            "OK"
-        ));
-    } catch (err) {
-        if (err instanceof Error) {
-            if (err.message.toLowerCase().includes('references `users`')) {
-                res.status(404).json(createResponse(
-                    false,
-                    null,
-                    "One of user uid of not found, bad relationship"
-                ))
-                return
-            } else if (err.message.toLowerCase().includes('references `kompetensi`')) {
-                res.status(404).json(createResponse(
-                    false,
-                    null,
-                    "Kompetensi uid was not found, bad relationship"
-                ))
-                return
-            } else {
-                res.status(500).json(createResponse(
-                    false,
-                    process.env.NODE_ENV === 'development' ? err.stack : undefined,
-                    err.message || 'An unknown error occurred!'
-                ))
-                return
-            }
-        }
-
-        console.log(err)
-        res.status(500).json(createResponse(
-            false,
-            null,
-            "Mbuh mas"
-        ))
-    }
-};
-
 export async function updateUser(req: Request, res: Response) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -496,52 +439,6 @@ export async function deleteUser(req: Request, res: Response) {
             res.status(500).json(createResponse(
                 false,
                 process.env.NODE_ENV === 'development' ? err.stack : undefined,
-                err.message || 'An unknown error occurred!'
-            ))
-            return
-        }
-
-        console.log(err)
-        res.status(500).json(createResponse(
-            false,
-            null,
-            "Mbuh mas"
-        ))
-    }
-}
-
-export async function deleteUserKompetensi(req: Request, res: Response) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        res.status(400).json(createResponse(
-            false,
-            null,
-            "Input error",
-            errors.array()
-        ));
-        return
-    }
-
-    const { list_kompetensi: listKompetensi } = req.body
-    const { uid } = req.query
-
-    try {
-        const data = await userService.deleteUserKompetensi(uid as string, listKompetensi)
-        if (data === "user_is_not_found") {
-            res.status(404).json(createResponse(false, null, "User not found"))
-            return
-        }
-
-        res.status(200).json(createResponse(
-            true,
-            data,
-            "OK"
-        ));
-    } catch (err) {
-        if (err instanceof Error) {
-            res.status(500).json(createResponse(
-                false,
-                process.env.NODE_ENV === 'development' ? err.stack : null,
                 err.message || 'An unknown error occurred!'
             ))
             return

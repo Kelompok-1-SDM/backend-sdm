@@ -13,16 +13,9 @@ export async function homepageMobile(uidUser: string) {
     const tugasBerlangsung = await kegiatanModels.fetchUserCurrentKegiatan(uidUser, new Date())
     const stats = await statistic(uidUser)
 
-    const temp1 = duaTugasTerbaru.map((it: any) => {
-        return {
-            ...it,
-            kompetensi: it.kompetensi.map((at: any) => at.namaKompetensi)
-        }
-    })
-
     return {
         jumlahTugasBulanSekarang: jumlahBulanSkrg,
-        duaTugasTerbaru: temp1,
+        duaTugasTerbaru: duaTugasTerbaru,
         tugasBerlangsung: tugasBerlangsung ? tugasBerlangsung : null,
         statistik: stats
     }
@@ -106,10 +99,6 @@ export async function createUser(data: UserDataType, file?: Express.Multer.File)
     return await usersModels.createUser(data)
 }
 
-export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]) {
-    return usersModels.addUserKompetensi(uidUser, uidKompetensi)
-}
-
 export async function updateUser(uidUser: string, data: Partial<usersModels.UserDataType>, file?: Express.Multer.File) {
     const temp = await usersModels.fetchUserByUid(uidUser)
     if (!temp || Object.keys(temp).length === 0) return "user_is_not_found"
@@ -131,10 +120,3 @@ export async function deleteUser(uidUser: string) {
 
     return res
 }
-
-export async function deleteUserKompetensi(uidUser: string, uidKompetensi: string[]) {
-    const temp = await usersModels.fetchUserByUid(uidUser)
-    if (!temp || Object.keys(temp).length === 0) return "user_is_not_found"
-
-    return await usersModels.deleteUserKompetensi(uidUser, uidKompetensi)
-}   

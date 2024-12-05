@@ -50,18 +50,6 @@ router.post('/import', authorize(['admin']),
     query('role').isIn(['admin', 'manajemen', 'dosen']).toLowerCase().trim().withMessage("Role are 'admin', 'manajemen', 'dosen'"),
 ], userController.createUserBatch)
 
-router.post('/kompetensi', authorize(['admin']), [
-    query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
-    query('uid').notEmpty().withMessage("This key should not be empty"),
-    body('list_kompetensi')
-        .isArray().withMessage('List kompetensi must be an array')
-        .bail()
-        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
-    body('list_kompetensi.*')
-        .isString().trim().withMessage('Each komp in the list must be a string')
-        .notEmpty().withMessage('kompetensiId cannot be empty'),
-], userController.addUserKompetensi);
-
 router.put('/', authorize(['admin', 'manajemen', 'dosen']),
     handleFileUpload, [
     query('uid').isString().trim().toLowerCase().withMessage("This key is optional and it's string"),
@@ -83,18 +71,5 @@ router.delete('/', authorize(['admin']), [
 ],
     userController.deleteUser
 )
-
-router.delete('/kompetensi', authorize(['admin']), [
-    query('uid').isString().trim().toLowerCase().withMessage("This key is required and it's string"),
-    query('uid').notEmpty().withMessage("This key should not be empty"),
-    body('list_kompetensi')
-        .isArray().withMessage('List kompetensi must be an array')
-        .bail()
-        .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
-    body('list_kompetensi.*')
-        .isString().trim().withMessage('Each komp in the list must be a string')
-        .notEmpty().withMessage('kompetensiId cannot be empty'),
-], userController.deleteUserKompetensi);
-
 
 export default router;

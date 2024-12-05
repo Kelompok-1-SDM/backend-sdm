@@ -1,9 +1,8 @@
 import { addTimestamps, db } from "./utilsModel";
-import { jumlahKegiatan, kompetensis, users, usersToKompetensis } from "../db/schema";
+import { jumlahKegiatan, users } from "../db/schema";
 import { and, eq, getTableColumns, sql, count } from "drizzle-orm";
 
 export type UserDataType = typeof users.$inferInsert
-export type UsersToKompetensiDataType = typeof usersToKompetensis.$inferInsert
 export const { password, ...userTableColumns } = getTableColumns(users)
 export const { userId, updatedAt, createdAt, ...jumlahKegitanColumns } = getTableColumns(jumlahKegiatan)
 //TODO Improve at query peformance
@@ -22,29 +21,12 @@ export async function fetchUserComplete(uidUser?: string, nip?: string) {
         columns: {
             password: false
         },
-        with: {
-            kompetensis: {
-                columns: {},
-                with: {
-                    kompetensi: true  // Fetch the related 'kompetensi' data
-                }
-            }
-        },
         where: ((users, { eq }) => nip ? eq(users.nip, sql.placeholder('nip')) : eq(users.userId, sql.placeholder('uidUser')))
     }).prepare()
 
     let dat = await prepared.execute(nip ? { nip } : { uidUser })
 
-    // Extracting users with all their details, but only the list of 'namaKompetensi' from the 'kompetensi' relation
-    const temp = dat?.kompetensis ? dat!.kompetensis.map((kompetensi) => {
-        return kompetensi.kompetensi
-    }) : null
-
-    return dat ? {
-        ...dat,
-        kompetensi: temp,
-        kompetensis: undefined
-    } : undefined
+    return dat ?? undefined
 }
 
 export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
@@ -118,23 +100,6 @@ export async function createBatchUser(data: UserDataType[]) {
     })
 }
 
-export async function addUserKompetensi(uidUser: string, uidKompetensi: string[]) {
-    const data: UsersToKompetensiDataType[] = uidKompetensi.map((it) => {
-        return addTimestamps({
-            userId: uidUser,
-            kompetensiId: it
-        })
-    })
-
-    await db.insert(usersToKompetensis).values(data!).onDuplicateKeyUpdate({
-        set: {
-            userId: sql`values(${usersToKompetensis.userId})`,
-        }
-    })
-
-    return await fetchUserComplete(uidUser)
-}
-
 // Internal only
 export async function addJumlahKegiatan(uidUser: string, wasDecrement: boolean = false, year: number, month: number) {
     await db.insert(jumlahKegiatan)
@@ -179,15 +144,4 @@ export async function deleteUser(uidUser: string) {
     await db.delete(users).where(eq(users.userId, uidUser))
 
     return user
-}
-
-export async function deleteUserKompetensi(uidUser: string, uidKompetensi: string[]) {
-    await db.transaction(async (tx) => {
-        await Promise.all(uidKompetensi.map(async (it) => {
-            await tx.delete(usersToKompetensis)
-                .where(and(eq(usersToKompetensis.userId, uidUser), eq(usersToKompetensis.kompetensiId, it)))
-        }))
-    })
-
-    return await fetchUserComplete(uidUser)
 }

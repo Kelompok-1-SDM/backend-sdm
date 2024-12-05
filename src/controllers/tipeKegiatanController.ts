@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { createResponse } from "../utils/utils";
-import * as kompetensiServices from '../services/kompetensiService'
+import * as tipeKegiatanServices from '../services/tipeKegiatanService'
 
-export async function fetchKompetensi(req: Request, res: Response) {
+export async function fetchTipeKegiatan(req: Request, res: Response) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
@@ -15,14 +15,14 @@ export async function fetchKompetensi(req: Request, res: Response) {
         return
     }
 
-    const { uid: uidKompetensi } = req.query
+    const { uid: uidTipeKegiatan } = req.query
     let data: any
 
     try {
-        if (uidKompetensi) {
-            data = await kompetensiServices.fetchKompetensi(uidKompetensi as string)
+        if (uidTipeKegiatan) {
+            data = await tipeKegiatanServices.fetchTipeKegiatan(uidTipeKegiatan as string)
         } else {
-            data = await kompetensiServices.fetchAllKompetensi()
+            data = await tipeKegiatanServices.fetchAllTipeKegiatan()
         }
 
         if (data === "kegiatan_is_not_found") {
@@ -54,7 +54,7 @@ export async function fetchKompetensi(req: Request, res: Response) {
     }
 }
 
-export async function createKompetensi(req: Request, res: Response) {
+export async function createTipeKegiatan(req: Request, res: Response) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
@@ -66,10 +66,10 @@ export async function createKompetensi(req: Request, res: Response) {
         return
     }
 
-    const { nama_kompetensi: namaKompetensi } = req.body
+    const { nama_tipe_kegiatan: tipeKegiatan } = req.body
 
     try {
-        const data = await kompetensiServices.createKompetensi({ namaKompetensi })
+        const data = await tipeKegiatanServices.createTipeKegiatan({ tipeKegiatan })
         res.status(200).json(createResponse(
             true,
             data,
@@ -81,7 +81,7 @@ export async function createKompetensi(req: Request, res: Response) {
                 res.status(422).json(createResponse(
                     false,
                     null,
-                    "Kompetensi is duplicated"
+                    "TipeKegiatan is duplicated"
                 ))
                 return
             } else {
@@ -104,7 +104,7 @@ export async function createKompetensi(req: Request, res: Response) {
 
 };
 
-export async function updateKompetensi(req: Request, res: Response) {
+export async function updateTipeKegiatan(req: Request, res: Response) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json(createResponse(
@@ -116,13 +116,13 @@ export async function updateKompetensi(req: Request, res: Response) {
         return
     }
 
-    const { nama_kompetensi: namaKompetensi } = req.body
+    const { nama_tipe_kegiatan: tipeKegiatan } = req.body
     const { uid } = req.query
 
     try {
-        const data = await kompetensiServices.updateKompetensi(uid as string, { namaKompetensi })
-        if (data === "kompetensi_is_not_found") {
-            res.status(404).json(createResponse(false, null, "Kompetensi not found"))
+        const data = await tipeKegiatanServices.updateTipeKegiatan(uid as string, { tipeKegiatan })
+        if (data === "tipekegiatan_is_not_found") {
+            res.status(404).json(createResponse(false, null, "TipeKegiatan not found"))
             return
         }
 
@@ -165,10 +165,10 @@ export async function deleteUser(req: Request, res: Response) {
     const { uid } = req.query
 
     try {
-        const data = await kompetensiServices.deleteKompetensi(uid as string)
+        const data = await tipeKegiatanServices.deleteTipeKegiatan(uid as string)
 
-        if (data === "kompetensi_is_not_found") {
-            res.status(404).json(createResponse(false, null, "Kompetensi not found"))
+        if (data === "tipekegiatan_is_not_found") {
+            res.status(404).json(createResponse(false, null, "TipeKegiatan not found"))
             return
         }
 
