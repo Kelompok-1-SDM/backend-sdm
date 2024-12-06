@@ -65,7 +65,7 @@ export const usersFcmTokenRelations = relations(usersFcmToken, ({ one }) => ({
 
 export const kegiatans = mysqlTable('kegiatan', {
     kegiatanId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),
-    tipeKegiatanId: varchar({ length: 24 }).references(() => tipeKegiatan.tipeKegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    tipeKegiatanId: varchar({ length: 24 }).references(() => tipeKegiatan.tipeKegiatanId, { onDelete: 'set null', onUpdate: 'cascade' }),
 
     judul: varchar({ length: 255 }).notNull(),
     tanggalMulai: datetime().default(sql`CURRENT_TIMESTAMP`),
@@ -109,7 +109,7 @@ export const usersToKegiatans = mysqlTable('users_to_kegiatan', {
     userToKegiatanId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),
     userId: varchar({ length: 24 }).references(() => users.userId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
     kegiatanId: varchar({ length: 24 }).references(() => kegiatans.kegiatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(), // Fix here
-    jabatanId: varchar({ length: 24 }).references(() => jabatanAnggota.jabatanId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
+    jabatanId: varchar({ length: 24 }).references(() => jabatanAnggota.jabatanId, { onDelete: 'set null', onUpdate: 'cascade' }),
 
     ...timestampsHelper
 }, (table) => {
@@ -285,13 +285,12 @@ export const progressAttachmentsRelations = relations(progressAttachments, ({ ma
 
 export const progressAgendaToProgressAttachment = mysqlTable('progress_to_attachment', {
     progressId: varchar({ length: 24 }).notNull(),
-    attachmentId: varchar({ length: 24 }).notNull(),
+    attachmentId: varchar({ length: 24 }),
 
     ...timestampsHelper
 }, (table) => {
     return {
         messageIdx: index('progress_index').on(table.progressId),
-        pk: primaryKey({ columns: [table.progressId, table.attachmentId] }),
         progress: foreignKey({
             name: "progress",
             columns: [table.progressId],
@@ -301,7 +300,8 @@ export const progressAgendaToProgressAttachment = mysqlTable('progress_to_attach
             name: "attachment",
             columns: [table.attachmentId],
             foreignColumns: [progressAttachments.attachmentId]
-        }).onDelete('cascade').onUpdate('cascade'),
+        }).onDelete('set null').onUpdate('cascade'),
+        uniqueConstraint: uniqueIndex('unique_progress_attachment').on(table.progressId, table.attachmentId), // Ensure uniqueness
     };
 })
 

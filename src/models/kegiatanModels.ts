@@ -22,7 +22,7 @@ export async function fetchAllKegiatan() {
     const op = ap.map((it) => {
         return {
             ...it,
-            tipeKegiatan: it.tipeKegiatan.tipeKegiatan
+            tipeKegiatan: it.tipeKegiatan?.tipeKegiatan ?? null
         }
     })
 
@@ -214,13 +214,13 @@ export async function fetchKegiatanByUid(uidKegiatan: string) {
             }
         }),
 
-        tipeKegiatan: kegiatan.tipeKegiatan.tipeKegiatan,
+        tipeKegiatan: kegiatan.tipeKegiatan?.tipeKegiatan ?? null,
 
         users: kegiatan.users ? kegiatan.users.map((it) => {
             return {
                 ...it.users,
-                namaJabatan: it.jabatans.namaJabatan,
-                isPic: it.jabatans.isPic,
+                namaJabatan: it.jabatans?.namaJabatan ?? null,
+                isPic: it.jabatans?.isPic ?? null,
             }
         }).sort((a, b) => {
             const isPicA = a.isPic ?? false; // Treat null as false

@@ -29,8 +29,8 @@ export async function fetchKegiatanWithUser(uidKegiatan: string, uidUser?: strin
     const opo = apa.map((it) => {
         return {
             ...it,
-            namaJabatan: it.jabatans.namaJabatan,
-            isPic: it.jabatans.isPic,
+            namaJabatan: it.jabatans?.namaJabatan ?? null,
+            isPic: it.jabatans?.isPic ?? null,
             nama: it.users.nama,
             jabatans: undefined,
             users: undefined
