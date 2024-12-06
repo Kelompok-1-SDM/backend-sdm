@@ -116,7 +116,7 @@ export async function fetchKegiatanByUser(uidUser: string, isDone: boolean = fal
             ...kegiatansColumns,
             jabatan: jabatanAnggota.namaJabatan,
             isPic: jabatanAnggota.isPic,
-            tipeKegiatanId: tipeKegiatan.tipeKegiatan
+            tipeKegiatan: tipeKegiatan.tipeKegiatan
         })
         .from(usersToKegiatans)
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
