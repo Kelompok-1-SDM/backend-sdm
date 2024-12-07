@@ -218,7 +218,7 @@ const seedUsersToKegiatans = async () => {
                             .values({
                                 userId: user.userId,
                                 year: randomKegiatan.tanggalMulai!.getFullYear(),
-                                month: randomKegiatan.tanggalMulai!.getMonth(),
+                                month: randomKegiatan.tanggalMulai!.getMonth() + 1,
                                 jumlahKegiatan: 1,
                             }).onDuplicateKeyUpdate({
                                 set: {
