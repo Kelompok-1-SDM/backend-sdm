@@ -82,9 +82,9 @@ export async function createKegiatan(req: Request, res: Response) {
     }
 
     try {
-        const { judul_kegiatan: judul, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, tipe_kegiatan_uid: tipeKegiatanId, lokasi, deskripsi } = req.body
+        const { judul_kegiatan: judul, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, tipe_kegiatan_uid: tipeKegiatanId, lokasi, deskripsi, is_done: isDone } = req.body
 
-        const data = await kegiatanService.createKegiatan({ judul, tanggalMulai, tanggalAkhir, tipeKegiatanId, lokasi, deskripsi })
+        const data = await kegiatanService.createKegiatan({ judul, tanggalMulai, tanggalAkhir, tipeKegiatanId, lokasi, deskripsi, isDone })
         res.status(200).json(createResponse(
             true,
             data,
@@ -131,10 +131,10 @@ export async function updateKegiatan(req: Request, res: Response) {
     }
 
     try {
-        const { judul_kegiatan: judul, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, tipe_kegiatan_uid: tipeKegiatanId, lokasi, deskripsi } = req.body
+        const { judul_kegiatan: judul, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, tipe_kegiatan_uid: tipeKegiatanId, lokasi, deskripsi, is_done: isDone } = req.body
         const { uid: uidKegiatan } = req.query
 
-        const data = await kegiatanService.updateKegiatan(uidKegiatan as string, { judul, tanggalMulai, tanggalAkhir, tipeKegiatanId: tipeKegiatanId, lokasi, deskripsi })
+        const data = await kegiatanService.updateKegiatan(uidKegiatan as string, { judul, tanggalMulai, tanggalAkhir, tipeKegiatanId: tipeKegiatanId, lokasi, deskripsi, isDone })
 
         if (data === "kegiatan_is_not_found") {
             res.status(404).json(createResponse(false, null, "Kegiatan not found"))
