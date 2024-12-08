@@ -3,6 +3,7 @@ import { fetchUserForAuth, updateUserPassword } from '../models/usersModels';
 import { generateResetToken } from './utilsService';
 import { createResetToken, deleteResetToken, findResetToken } from '../models/passwordReset';
 import { sendPasswordResetEmail } from '../utils/email';
+import { hashPassword } from '../utils/utils';
 
 export async function requestPasswordReset(nip: string) {
     const user = await fetchUserForAuth(nip);
@@ -22,6 +23,8 @@ export async function validateResetToken(token: string) {
 }
 
 export async function resetPassword(userId: string, newPassword: string) {
+    newPassword = await hashPassword(newPassword)
+
     await updateUserPassword(userId, newPassword);
     await deleteResetToken(userId);
 }
