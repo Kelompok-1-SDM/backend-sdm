@@ -125,7 +125,7 @@ export async function fetchKegiatanByUser(uidUser: string, isDone?: boolean, tan
         .where(
             and(
                 eq(usersToKegiatans.userId, sql.placeholder("uidUser")),
-                isDone ? eq(kegiatans.isDone, sql.placeholder("isDone")) : undefined,
+                isDone != null ? eq(kegiatans.isDone, sql.placeholder("isDone")) : undefined,
                 tanggal
                     ? eq(sql`DATE(${kegiatans.tanggalMulai})`, sql.placeholder("tanggal"))
                     : undefined
