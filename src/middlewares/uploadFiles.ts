@@ -12,6 +12,7 @@ const allowedMimeTypes = [
     'application/pdf', // .pdf
     'text/plain', // .txt
     'image/jpeg', // .jpg, .jpeg
+    'image/jpg', // .jpg, .jpeg
     'image/png',  // .png
     'image/gif',  // .gif
     'image/svg+xml', // .svg
