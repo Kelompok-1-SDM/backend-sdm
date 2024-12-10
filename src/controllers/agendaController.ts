@@ -162,6 +162,19 @@ export async function createProgressAgenda(req: Request, res: Response) {
         const { deskripsi_progress: deskripsiProgress } = req.body
         const files = req.files as Express.Multer.File[];
 
+        const agenda = await agendaServices.fetchAgenda(uidAgenda as string);
+        if (req.user?.role === 'dosen' && agenda != 'agenda_is_not_found') {
+            const wasAllowed = await fetchUserJabatanInKegiatan(agenda.kegiatanId as string, req.user!.userId as string)
+            if (!wasAllowed) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this"
+                ));
+                return
+            }
+        }
+
         if (!files || files.length === 0) {
             res.status(400).json(createResponse(
                 false,
@@ -220,14 +233,23 @@ export async function updateAgenda(req: Request, res: Response) {
     const { uid: uidAgenda } = req.query
     let { kegiatan_id: uidKegiatan, jadwal_agenda: jadwalAgenda, nama_agenda: namaAgenda, deskripsi_agenda: deskripsiAgenda, is_done: isDone, list_uid_user_kegiatan: listUserKegiatan } = req.body
 
-
-    if (req.user?.role === 'dosen') {
-        const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
+    const agenda = await agendaServices.fetchAgenda(uidAgenda as string);
+    if (req.user?.role === 'dosen' && agenda != 'agenda_is_not_found') {
+        const wasAllowed = await fetchUserJabatanInKegiatan(agenda.kegiatanId as string, req.user!.userId as string)
         if (!wasAllowed) {
             res.status(401).json(createResponse(
                 false,
                 null,
                 "You're not allowed to do this"
+            ));
+            return
+        }
+
+        if (!wasAllowed.isPic) {
+            res.status(401).json(createResponse(
+                false,
+                null,
+                "You're not PIC, or higher role"
             ));
             return
         }
@@ -302,6 +324,19 @@ export async function updateProgressAgenda(req: Request, res: Response) {
         const { deskripsi_progress: deskripsiProgress, uid_agenda: uidAgenda } = req.body
         const files = req.files as Express.Multer.File[];
 
+        const agenda = await agendaServices.fetchAgenda(uidAgenda as string);
+        if (req.user?.role === 'dosen' && agenda != 'agenda_is_not_found') {
+            const wasAllowed = await fetchUserJabatanInKegiatan(agenda.kegiatanId as string, req.user!.userId as string)
+            if (!wasAllowed) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this"
+                ));
+                return
+            }
+        }
+
         const data = await agendaServices.updateProgressAgenda(uidProgress as string, { agendaId: uidAgenda as string, deskripsiProgress: deskripsiProgress as string }, files)
         res.status(200).json(createResponse(
             true,
@@ -350,6 +385,28 @@ export async function deleteAgenda(req: Request, res: Response) {
 
     const { uid: uidAgenda } = req.query
 
+    const agenda = await agendaServices.fetchAgenda(uidAgenda as string);
+    if (req.user?.role === 'dosen' && agenda != 'agenda_is_not_found') {
+        const wasAllowed = await fetchUserJabatanInKegiatan(agenda.kegiatanId as string, req.user!.userId as string)
+        if (!wasAllowed) {
+            res.status(401).json(createResponse(
+                false,
+                null,
+                "You're not allowed to do this"
+            ));
+            return
+        }
+
+        if (!wasAllowed.isPic) {
+            res.status(401).json(createResponse(
+                false,
+                null,
+                "You're not PIC, or higher role"
+            ));
+            return
+        }
+    }
+
     try {
         const data = await agendaServices.deleteAgenda(uidAgenda as string)
 
@@ -357,6 +414,7 @@ export async function deleteAgenda(req: Request, res: Response) {
             res.status(404).json(createResponse(false, null, "Agenda not found"))
             return
         }
+
 
         res.status(200).json(createResponse(
             true,
@@ -396,6 +454,28 @@ export async function deleteUserFromAgenda(req: Request, res: Response) {
     }
 
     const { uid: uidAgenda, uid_user_kegiatan: uidUserKegiatan } = req.query
+
+    const agenda = await agendaServices.fetchAgenda(uidAgenda as string);
+    if (req.user?.role === 'dosen' && agenda != 'agenda_is_not_found') {
+        const wasAllowed = await fetchUserJabatanInKegiatan(agenda.kegiatanId as string, req.user!.userId as string)
+        if (!wasAllowed) {
+            res.status(401).json(createResponse(
+                false,
+                null,
+                "You're not allowed to do this"
+            ));
+            return
+        }
+
+        if (!wasAllowed.isPic) {
+            res.status(401).json(createResponse(
+                false,
+                null,
+                "You're not PIC, or higher role"
+            ));
+            return
+        }
+    }
 
     try {
         const data = await agendaServices.deleteUserFromAgenda(uidAgenda as string, uidUserKegiatan as string)

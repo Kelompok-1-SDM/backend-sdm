@@ -22,6 +22,13 @@ export async function fetchAgenda(uidAgenda: string) {
     return temp
 }
 
+export async function fetchAgendaOnly(uidAgenda: string) {
+    const temp = await agendaModels.fetchAgenda(uidAgenda)
+    if (!temp || Object.keys(temp).length === 0) return "agenda_is_not_found"
+
+    return temp
+}
+
 export async function createAgenda(dataAgenda: agendaModels.AgendaKegiatanDataType, listUiduserKegiatan?: string[]) {
 
     return await agendaModels.createAgenda(dataAgenda, listUiduserKegiatan)
