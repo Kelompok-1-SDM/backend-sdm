@@ -108,7 +108,7 @@ export async function fetchAgenda(uidAgenda: string) {
             },
             agendaToUser: {
                 columns: {
-                    userKegiatanId: true
+                    userToKegiatanId: true
                 },
                 with: {
                     userToKegiatans: {
@@ -136,7 +136,7 @@ export async function fetchAgenda(uidAgenda: string) {
             progressAttachment: undefined
         })),
         users: res?.agendaToUser.map(it => ({
-            userKegiatanId: it.userKegiatanId,
+            userToKegiatanId: it.userToKegiatanId,
             ...it.userToKegiatans.users
         })),
 
@@ -210,7 +210,7 @@ export async function createAgenda(dataAgenda: AgendaKegiatanDataType, listUidus
             const what = listUiduserKegiatan.map((it) => {
                 return addTimestamps({
                     agendaId: id.agendaId,
-                    userKegiatanId: it
+                    userToKegiatanId: it
                 })
             })
             await tx.insert(agendaToUsersKegiatans).values(addTimestamps(what))
@@ -230,13 +230,13 @@ export async function updateAgenda(uidAgenda: string, dataAgenda: Partial<Agenda
         const what = listUiduserKegiatan.map((it) => {
             return addTimestamps({
                 agendaId: uidAgenda,
-                userKegiatanId: it
+                userToKegiatanId: it
             })
         })
         await db.insert(agendaToUsersKegiatans).values(what).onDuplicateKeyUpdate({
             set: {
                 agendaId: sql`values(${agendaToUsersKegiatans.agendaId})`,
-                userKegiatanId: sql`values(${agendaToUsersKegiatans.userKegiatanId})`
+                userToKegiatanId: sql`values(${agendaToUsersKegiatans.userToKegiatanId})`
             }
         })
     }
@@ -296,7 +296,7 @@ export async function updateProgress(uidProgress: string, dataProgress: Partial<
 export async function deleteUserFromAgenda(uidAgenda: string, uidUserKegiatan: string) {
     await db.delete(agendaToUsersKegiatans).where(
         and(
-            eq(agendaToUsersKegiatans.userKegiatanId, uidUserKegiatan),
+            eq(agendaToUsersKegiatans.userToKegiatanId, uidUserKegiatan),
             eq(agendaToUsersKegiatans.agendaId, uidAgenda)
         )
     )

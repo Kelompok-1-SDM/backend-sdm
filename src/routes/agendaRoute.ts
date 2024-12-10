@@ -27,8 +27,8 @@ router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
         .bail()
         .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
     body('list_uid_user_kegiatan.*')
-        .isString().trim().withMessage('Each userKegiatanId in the list must be a string')
-        .notEmpty().withMessage('userKegiatanId cannot be empty'),
+        .isString().trim().withMessage('Each userToKegiatanId in the list must be a string')
+        .notEmpty().withMessage('userToKegiatanId cannot be empty'),
 ], agendaController.createAgenda)
 
 router.post('/progress', authorize(['admin', 'manajemen', 'dosen']), handleFileUploadArray, [
@@ -55,8 +55,8 @@ router.put('/', authorize(['admin', 'manajemen', 'dosen']), [
         .bail()
         .custom((value) => value.length > 0).withMessage('List user ditugaskan cannot be an empty array'),
     body('list_uid_user_kegiatan.*')
-        .isString().optional().trim().withMessage('Each userKegiatanId in the list must be a string')
-        .notEmpty().withMessage('userKegiatanId cannot be empty'),
+        .isString().optional().trim().withMessage('Each userToKegiatanId in the list must be a string')
+        .notEmpty().withMessage('userToKegiatanId cannot be empty'),
 ], agendaController.updateAgenda)
 
 

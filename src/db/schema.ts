@@ -219,18 +219,18 @@ export const agendaKegiatansRelations = relations(agendaKegiatans, ({ one, many 
 
 export const agendaToUsersKegiatans = mysqlTable('agenda_to_user_kegiatan', {
     agendaId: varchar({ length: 24 }).references(() => agendaKegiatans.agendaId, { onDelete: 'cascade', onUpdate: 'cascade' }).notNull(),
-    userKegiatanId: varchar({ length: 24 }).notNull(),
+    userToKegiatanId: varchar({ length: 24 }).notNull(),
 
     ...timestampsHelper,
 }, (table) => {
     return {
         agendaIdx: index('agenda_index').on(table.agendaId),
-        userKegiatanIdx: index('user_kegiatan_index').on(table.userKegiatanId),
-        uniqueIndex: uniqueIndex('agenda_userkeg_unique').on(table.agendaId, table.userKegiatanId),
+        userToKegiatanIdx: index('user_kegiatan_index').on(table.userToKegiatanId),
+        uniqueIndex: uniqueIndex('agenda_userkeg_unique').on(table.agendaId, table.userToKegiatanId),
 
         userToKegiatan: foreignKey({
             name: "user_to_kegiatan_id",
-            columns: [table.userKegiatanId],
+            columns: [table.userToKegiatanId],
             foreignColumns: [usersToKegiatans.userToKegiatanId]
         }).onDelete('cascade').onUpdate('cascade')
     };
@@ -243,7 +243,7 @@ export const agendaToUsersKegiatansRelations = relations(agendaToUsersKegiatans,
         references: [agendaKegiatans.agendaId]
     }),
     userToKegiatans: one(usersToKegiatans, {
-        fields: [agendaToUsersKegiatans.userKegiatanId],
+        fields: [agendaToUsersKegiatans.userToKegiatanId],
         references: [usersToKegiatans.userToKegiatanId]
     })
 }))

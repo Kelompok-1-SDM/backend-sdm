@@ -297,7 +297,7 @@ const seedAgendaKegiatans = async () => {
             for (const user of relatedUsers) {
                 userToAgendaSeeds.push({
                     agendaId,
-                    userKegiatanId: user.userToKegiatanId,
+                    userToKegiatanId: user.userToKegiatanId,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                 });
