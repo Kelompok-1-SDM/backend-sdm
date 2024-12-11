@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { createResponse } from "../utils/utils";
 import * as agendaServices from '../services/agendaService'
-import { fetchUserJabatanInKegiatan } from '../models/penugasanModels'
+import { fetchUserInAgenda, fetchUserJabatanInKegiatan } from '../models/penugasanModels'
 
 export async function fetchAgenda(req: Request, res: Response) {
     const errors = validationResult(req);
@@ -28,7 +28,8 @@ export async function fetchAgenda(req: Request, res: Response) {
             let wasMePic;
             if (req.user?.role === 'dosen') {
                 const wasAllowed = await fetchUserJabatanInKegiatan(data.kegiatanId, req.user!.userId as string)
-                if (!wasAllowed) {
+                const wasInAgenda = await fetchUserInAgenda(uidAgenda as string, req.user!.userId as string)
+                if (!wasAllowed || !wasInAgenda) {
                     res.status(401).json(createResponse(
                         false,
                         null,
@@ -165,7 +166,8 @@ export async function createProgressAgenda(req: Request, res: Response) {
         const agenda = await agendaServices.fetchAgenda(uidAgenda as string);
         if (req.user?.role === 'dosen' && agenda != 'agenda_is_not_found') {
             const wasAllowed = await fetchUserJabatanInKegiatan(agenda.kegiatanId as string, req.user!.userId as string)
-            if (!wasAllowed) {
+            const wasInAgenda = await fetchUserInAgenda(uidAgenda as string, req.user!.userId as string)
+            if (!wasAllowed || !wasInAgenda) {
                 res.status(401).json(createResponse(
                     false,
                     null,
@@ -327,7 +329,8 @@ export async function updateProgressAgenda(req: Request, res: Response) {
         const agenda = await agendaServices.fetchAgenda(uidAgenda as string);
         if (req.user?.role === 'dosen' && agenda != 'agenda_is_not_found') {
             const wasAllowed = await fetchUserJabatanInKegiatan(agenda.kegiatanId as string, req.user!.userId as string)
-            if (!wasAllowed) {
+            const wasInAgenda = await fetchUserInAgenda(uidAgenda as string, req.user!.userId as string)
+            if (!wasAllowed || !wasInAgenda) {
                 res.status(401).json(createResponse(
                     false,
                     null,

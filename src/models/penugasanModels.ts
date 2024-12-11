@@ -1,5 +1,5 @@
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
-import { jabatanAnggota, usersToKegiatans } from "../db/schema";
+import { agendaToUsersKegiatans, jabatanAnggota, usersToKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 
 export const userToKegiatanColumns = getTableColumns(usersToKegiatans)
@@ -8,6 +8,13 @@ export const userToKegiatanColumns = getTableColumns(usersToKegiatans)
 export async function fetchUserJabatanInKegiatan(uidKegiatan: string, uidUser: string) {
     const prepared = db.select({ isPic: jabatanAnggota.isPic }).from(usersToKegiatans).leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId)).where(and(eq(usersToKegiatans.kegiatanId, sql.placeholder('uidKegiatan')), eq(usersToKegiatans.userId, sql.placeholder('uidUser')))).prepare()
     const [temp] = await prepared.execute({ uidKegiatan, uidUser })
+
+    return temp
+}
+
+export async function fetchUserInAgenda(uidAgenda: string, uidUser: string) {
+    const prepared = db.select().from(agendaToUsersKegiatans).leftJoin(usersToKegiatans, eq(usersToKegiatans.userToKegiatanId, agendaToUsersKegiatans.userToKegiatanId)).where(and(eq(agendaToUsersKegiatans.agendaId, sql.placeholder('uidAgenda')), eq(usersToKegiatans.userId, sql.placeholder('uidUser')))).prepare()
+    const [temp] = await prepared.execute({ uidAgenda, uidUser })
 
     return temp
 }
