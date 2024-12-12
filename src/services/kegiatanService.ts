@@ -38,18 +38,6 @@ export async function updateKegiatan(uidKegiatan: string, dataKegiatan: Partial<
     const temp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
     if (!temp || Object.keys(temp).length === 0) return "kegiatan_is_not_found"
 
-    if (dataKegiatan.isDone && dataKegiatan.isDone == true) {
-        const listUser = await kegiatanModels.fetchKegiatanByUid(uidKegiatan)
-        if (listUser?.users && listUser.users.length != 0) {
-            const kegKomp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
-            await Promise.all(listUser!.users.map(async (it) => {
-                await usersModels.addJumlahKegiatan(it.userId, undefined, kegKomp!.tanggalMulai!.getFullYear(), kegKomp!.tanggalMulai!.getMonth() + 1)
-
-            }))
-        }
-
-    }
-
     return await kegiatanModels.updateKegiatan(uidKegiatan, dataKegiatan)
 }
 

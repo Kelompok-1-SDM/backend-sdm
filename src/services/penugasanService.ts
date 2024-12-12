@@ -16,6 +16,11 @@ export async function tugaskanKegiatan(uidKegiatan: string, listUserDitugaskan: 
     // TODO Do notification
     const penugasan = await penugasanModels.createPenugasan(uidKegiatan, listUserDitugaskan)
 
+    const kegKomp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
+    await Promise.all(listUserDitugaskan!.map(async (it) => {
+        await usersModels.addJumlahKegiatan(it.uid_user, undefined, kegKomp!.tanggalMulai!.getFullYear(), kegKomp!.tanggalMulai!.getMonth() + 1)
+    }))
+
     const cht = await ChatRoom.findOne({ roomId: uidKegiatan })
     await Promise.all(listUserDitugaskan.map(async (asp) => {
         if (cht && !cht.assignedUsers?.includes(asp.uid_user)) {
@@ -31,6 +36,19 @@ export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitug
     // TODO Do notification
     const apa = await penugasanModels.updatePenugasanKegiatan(uidKegiatan, listUserDitugaskan)
 
+    const kegKomp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
+    await Promise.all(listUserDitugaskan!.map(async (it) => {
+        await usersModels.addJumlahKegiatan(it.uid_user, undefined, kegKomp!.tanggalMulai!.getFullYear(), kegKomp!.tanggalMulai!.getMonth() + 1)
+    }))
+
+    const cht = await ChatRoom.findOne({ roomId: uidKegiatan })
+    await Promise.all(listUserDitugaskan.map(async (asp) => {
+        if (cht && !cht.assignedUsers?.includes(asp.uid_user)) {
+            cht.assignedUsers!.push(asp.uid_user)
+        }
+    }))
+    await cht?.save()
+
     return apa
 }
 
@@ -43,6 +61,9 @@ export async function deletePenugasan(uidKegiatan: string, uidUser: string) {
     if (!wt || Object.keys(wt).length === 0) return "user_is_not_found"
 
     const apa = await penugasanModels.deletePenugasan(uidKegiatan, uidUser)
+
+    const keg = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
+    await usersModels.addJumlahKegiatan(uidUser, true, keg!.tanggalMulai!.getFullYear(), keg!.tanggalMulai!.getMonth() + 1)
 
     const kegKomp = await kegiatanModels.fetchKegiatanByUid(uidKegiatan)
     const tahun = kegKomp?.tanggalMulai ? kegKomp?.tanggalMulai?.getFullYear() : 0

@@ -1,6 +1,6 @@
 import { and, desc, eq, getTableColumns, sql, count, or } from "drizzle-orm";
 import { jabatanAnggota, jumlahKegiatan, kegiatans, tipeKegiatan, usersToKegiatans } from "../db/schema";
-import { addTimestamps, batchQuerySize, db } from "./utilsModel";
+import { addTimestamps, db } from "./utilsModel";
 
 export type KegiatanDataType = typeof kegiatans.$inferInsert
 export const kegiatansColumns = getTableColumns(kegiatans)

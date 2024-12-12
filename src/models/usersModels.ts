@@ -6,15 +6,26 @@ export type UserDataType = typeof users.$inferInsert
 export const { password, ...userTableColumns } = getTableColumns(users)
 export const { userId, updatedAt, createdAt, ...jumlahKegitanColumns } = getTableColumns(jumlahKegiatan)
 //TODO Improve at query peformance
+
 export async function fetchAllUser() {
     const prepared = db.query.users.findMany({
         columns: {
-            password: false
+            password: false, // Exclude password
         },
-    }).prepare()
+        extras: {
+            totalJumlahKegiatan: sql<number>`
+                (
+                    SELECT COALESCE(SUM(jk.jumlah_kegiatan), 0)
+                    FROM jumlah_kegiatan jk
+                    WHERE jk.user_id = users.user_id
+                )
+            `.as('totalJumlahKegiatan'),
+        },
+    }).prepare();
 
-    return await prepared.execute()
+    return await prepared.execute();
 }
+
 
 export async function fetchUserComplete(uidUser?: string, nip?: string) {
     const prepared = db.query.users.findFirst({
