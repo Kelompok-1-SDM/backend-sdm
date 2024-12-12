@@ -32,6 +32,15 @@ export async function fetchUserComplete(uidUser?: string, nip?: string) {
         columns: {
             password: false
         },
+        extras: {
+            totalJumlahKegiatan: sql<number>`
+                (
+                    SELECT COALESCE(SUM(jk.jumlah_kegiatan), 0)
+                    FROM jumlah_kegiatan jk
+                    WHERE jk.user_id = users.user_id
+                )
+            `.as('totalJumlahKegiatan'),
+        },
         where: ((users, { eq }) => nip ? eq(users.nip, sql.placeholder('nip')) : eq(users.userId, sql.placeholder('uidUser')))
     }).prepare()
 
@@ -44,6 +53,15 @@ export async function fetchUserByRole(role: 'admin' | 'manajemen' | 'dosen') {
     const prepared = db.query.users.findMany({
         columns: {
             password: false
+        },
+        extras: {
+            totalJumlahKegiatan: sql<number>`
+                (
+                    SELECT COALESCE(SUM(jk.jumlah_kegiatan), 0)
+                    FROM jumlah_kegiatan jk
+                    WHERE jk.user_id = users.user_id
+                )
+            `.as('totalJumlahKegiatan'),
         },
         where: ((users, { eq }) => eq(users.role, sql.placeholder('role')))
     }).prepare()
