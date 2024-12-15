@@ -46,6 +46,7 @@ CREATE TABLE `kegiatan` (
 	`is_done` boolean DEFAULT false,
 	`lokasi` varchar(100) NOT NULL,
 	`deskripsi` text,
+	`progress` text,
 	`updated_at` timestamp,
 	`created_at` timestamp NOT NULL DEFAULT (now()),
 	CONSTRAINT `kegiatan_kegiatan_id` PRIMARY KEY(`kegiatan_id`)

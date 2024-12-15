@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, sql, count, or } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, sql, count, or, gte, lte } from "drizzle-orm";
 import { jabatanAnggota, jumlahKegiatan, kegiatans, tipeKegiatan, usersToKegiatans } from "../db/schema";
 import { addTimestamps, db } from "./utilsModel";
 
@@ -150,15 +150,34 @@ export async function fetchKegiatanByUser(uidUser: string, isDone?: boolean, tan
 }
 
 export async function fetchUserCurrentKegiatan(uidUser: string, datetime: Date) {
-    const prepared = db.select({ ...kegiatansColumns, jabatan: jabatanAnggota.namaJabatan, isPic: jabatanAnggota.isPic, tipeKegiatan: tipeKegiatan.tipeKegiatan, isJti: tipeKegiatan.isJti }).from(usersToKegiatans)
+    const prepared = db
+        .select({
+            ...kegiatansColumns,
+            jabatan: jabatanAnggota.namaJabatan,
+            isPic: jabatanAnggota.isPic,
+            tipeKegiatan: tipeKegiatan.tipeKegiatan,
+            isJti: tipeKegiatan.isJti,
+        })
+        .from(usersToKegiatans)
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
         .leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId))
         .leftJoin(tipeKegiatan, eq(kegiatans.tipeKegiatanId, tipeKegiatan.tipeKegiatanId))
-        .where(and(eq(usersToKegiatans.userId, sql.placeholder('uidUser')), eq(kegiatans.tanggalMulai, sql.placeholder('datetime')))).prepare()
-    const [kegiatan] = await prepared.execute({ uidUser, datetime })
+        .where(
+            and(
+                eq(usersToKegiatans.userId, sql.placeholder('uidUser')),
+                and(
+                    gte(sql.placeholder('datetime'), kegiatans.tanggalMulai),
+                    lte(sql.placeholder('datetime'), kegiatans.tanggalAkhir)
+                )
+            )
+        )
+        .prepare();
 
-    return kegiatan
+    const [kegiatan] = await prepared.execute({ uidUser, datetime });
+
+    return kegiatan;
 }
+
 
 export async function fetchKegiatanByUid(uidKegiatan: string) {
     const prepared = db.query.kegiatans.findFirst({

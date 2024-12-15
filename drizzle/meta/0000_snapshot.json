@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "d31f5d16-bb84-4f15-aadb-c1702e278fcf",
+  "id": "05c3a7cd-8f33-44a2-acbd-1d7b22a9cffd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "agenda_kegiatan": {
@@ -399,6 +399,13 @@
         },
         "deskripsi": {
           "name": "deskripsi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "progress": {
+          "name": "progress",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
