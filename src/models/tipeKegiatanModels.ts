@@ -5,8 +5,10 @@ import { addTimestamps, db } from "./utilsModel";
 export type TipeKegiatanDataType = typeof tipeKegiatan.$inferInsert
 export const tipeKegiatansColumns = getTableColumns(tipeKegiatan)
 //TODO Improve at query peformance
-export async function fetchAllTipeKegiatan() {
-    return await db.query.tipeKegiatan.findMany();
+export async function fetchAllTipeKegiatan(isJti?: boolean) {
+    return await db.query.tipeKegiatan.findMany({
+        where: isJti != null ? (tipeKegiatan, { eq }) => eq(tipeKegiatan.isJti, isJti) : undefined,
+    });
 }
 
 export async function fetchTipeKegiatanByUid(uidtipeKegiatan: string) {

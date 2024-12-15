@@ -15,7 +15,7 @@ router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('tanggal').optional().notEmpty().withMessage("This key should not be empty"),
 ], kegiatanController.fetchKegiatan)
 
-router.post('/', authorize(['admin', 'manajemen']), [
+router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
     body('judul_kegiatan').isString().trim().withMessage("This key is required and it's string"),
     body('judul_kegiatan').notEmpty().withMessage("This key should not be empty"),
     body('tipe_kegiatan_uid').isString().trim().withMessage("This key is required and it's string"),

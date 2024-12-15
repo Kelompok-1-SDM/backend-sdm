@@ -108,6 +108,7 @@ const seedJabatan = async () => {
 const seedTipeKegiatan = async () => {
     const tipeKegiatanSeeds = Array.from({ length: 5 }).map(() => ({
         tipeKegiatan: faker.lorem.words(1),
+        isJti: faker.datatype.boolean()
     }));
 
     await db.insert(tipeKegiatan).values(tipeKegiatanSeeds)

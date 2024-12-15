@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { createResponse } from "../utils/utils";
 import * as kegiatanService from '../services/kegiatanService'
+import * as tipeKegiatanService from '../services/tipeKegiatanService'
 
 
 export async function fetchKegiatan(req: Request, res: Response) {
@@ -81,8 +82,22 @@ export async function createKegiatan(req: Request, res: Response) {
         return
     }
 
+
+
     try {
         const { judul_kegiatan: judul, tanggal_mulai: tanggalMulai, tanggal_akhir: tanggalAkhir, tipe_kegiatan_uid: tipeKegiatanId, lokasi, deskripsi, is_done: isDone } = req.body
+
+        if (req.user?.role == 'dosen') {
+            const tipe = await tipeKegiatanService.fetchTipeKegiatan(tipeKegiatanId)
+            if (tipe != 'tipekegiatan_is_not_found' && tipe.isJti) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this"
+                ));
+                return
+            }
+        }
 
         const data = await kegiatanService.createKegiatan({ judul, tanggalMulai, tanggalAkhir, tipeKegiatanId, lokasi, deskripsi, isDone })
         res.status(200).json(createResponse(

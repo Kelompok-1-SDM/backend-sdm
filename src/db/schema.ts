@@ -97,6 +97,7 @@ export const tipeKegiatan = mysqlTable('tipe_kegiatan', {
     tipeKegiatanId: varchar({ length: 24 }).$defaultFn(() => createId()).primaryKey(),
 
     tipeKegiatan: varchar({ length: 255 }).notNull(),
+    isJti: boolean().default(true),
 
     ...timestampsHelper
 })

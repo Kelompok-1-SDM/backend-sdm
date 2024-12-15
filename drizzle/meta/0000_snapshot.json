@@ -1,0 +1,1239 @@
+{
+  "version": "5",
+  "dialect": "mysql",
+  "id": "d31f5d16-bb84-4f15-aadb-c1702e278fcf",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "agenda_kegiatan": {
+      "name": "agenda_kegiatan",
+      "columns": {
+        "agenda_id": {
+          "name": "agenda_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kegiatan_id": {
+          "name": "kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "jadwal_agenda": {
+          "name": "jadwal_agenda",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nama_agenda": {
+          "name": "nama_agenda",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deskripsi_agenda": {
+          "name": "deskripsi_agenda",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_done": {
+          "name": "is_done",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "jadwalAgenda_index": {
+          "name": "jadwalAgenda_index",
+          "columns": [
+            "jadwal_agenda"
+          ],
+          "isUnique": false
+        },
+        "namaAgenda_index": {
+          "name": "namaAgenda_index",
+          "columns": [
+            "nama_agenda"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "agenda_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk": {
+          "name": "agenda_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk",
+          "tableFrom": "agenda_kegiatan",
+          "tableTo": "kegiatan",
+          "columnsFrom": [
+            "kegiatan_id"
+          ],
+          "columnsTo": [
+            "kegiatan_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "agenda_kegiatan_agenda_id": {
+          "name": "agenda_kegiatan_agenda_id",
+          "columns": [
+            "agenda_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "agenda_to_user_kegiatan": {
+      "name": "agenda_to_user_kegiatan",
+      "columns": {
+        "agenda_id": {
+          "name": "agenda_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_to_kegiatan_id": {
+          "name": "user_to_kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "agenda_index": {
+          "name": "agenda_index",
+          "columns": [
+            "agenda_id"
+          ],
+          "isUnique": false
+        },
+        "user_kegiatan_index": {
+          "name": "user_kegiatan_index",
+          "columns": [
+            "user_to_kegiatan_id"
+          ],
+          "isUnique": false
+        },
+        "agenda_userkeg_unique": {
+          "name": "agenda_userkeg_unique",
+          "columns": [
+            "agenda_id",
+            "user_to_kegiatan_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "agenda_to_user_kegiatan_agenda_id_agenda_kegiatan_agenda_id_fk": {
+          "name": "agenda_to_user_kegiatan_agenda_id_agenda_kegiatan_agenda_id_fk",
+          "tableFrom": "agenda_to_user_kegiatan",
+          "tableTo": "agenda_kegiatan",
+          "columnsFrom": [
+            "agenda_id"
+          ],
+          "columnsTo": [
+            "agenda_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "user_to_kegiatan_id": {
+          "name": "user_to_kegiatan_id",
+          "tableFrom": "agenda_to_user_kegiatan",
+          "tableTo": "users_to_kegiatan",
+          "columnsFrom": [
+            "user_to_kegiatan_id"
+          ],
+          "columnsTo": [
+            "user_to_kegiatan_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jabatan_anggota": {
+      "name": "jabatan_anggota",
+      "columns": {
+        "jabatan_id": {
+          "name": "jabatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nama_jabatan": {
+          "name": "nama_jabatan",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "is_pic": {
+          "name": "is_pic",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "jabatan_anggota_jabatan_id": {
+          "name": "jabatan_anggota_jabatan_id",
+          "columns": [
+            "jabatan_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jumlah_kegiatan": {
+      "name": "jumlah_kegiatan",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "year",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "month": {
+          "name": "month",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "jumlah_kegiatan": {
+          "name": "jumlah_kegiatan",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "users_index": {
+          "name": "users_index",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "year_index": {
+          "name": "year_index",
+          "columns": [
+            "year"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "jumlah_kegiatan_user_id_users_user_id_fk": {
+          "name": "jumlah_kegiatan_user_id_users_user_id_fk",
+          "tableFrom": "jumlah_kegiatan",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "jumlah_kegiatan_user_id_year_month_pk": {
+          "name": "jumlah_kegiatan_user_id_year_month_pk",
+          "columns": [
+            "user_id",
+            "year",
+            "month"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "kegiatan": {
+      "name": "kegiatan",
+      "columns": {
+        "kegiatan_id": {
+          "name": "kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipe_kegiatan_id": {
+          "name": "tipe_kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "judul": {
+          "name": "judul",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tanggal_mulai": {
+          "name": "tanggal_mulai",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "tanggal_akhir": {
+          "name": "tanggal_akhir",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "is_done": {
+          "name": "is_done",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "lokasi": {
+          "name": "lokasi",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deskripsi": {
+          "name": "deskripsi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "judul_index": {
+          "name": "judul_index",
+          "columns": [
+            "judul"
+          ],
+          "isUnique": false
+        },
+        "tanggal_index": {
+          "name": "tanggal_index",
+          "columns": [
+            "tanggal_mulai"
+          ],
+          "isUnique": false
+        },
+        "lokasi_index": {
+          "name": "lokasi_index",
+          "columns": [
+            "lokasi"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "kegiatan_tipe_kegiatan_id_tipe_kegiatan_tipe_kegiatan_id_fk": {
+          "name": "kegiatan_tipe_kegiatan_id_tipe_kegiatan_tipe_kegiatan_id_fk",
+          "tableFrom": "kegiatan",
+          "tableTo": "tipe_kegiatan",
+          "columnsFrom": [
+            "tipe_kegiatan_id"
+          ],
+          "columnsTo": [
+            "tipe_kegiatan_id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "kegiatan_kegiatan_id": {
+          "name": "kegiatan_kegiatan_id",
+          "columns": [
+            "kegiatan_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lampiran_kegiatan": {
+      "name": "lampiran_kegiatan",
+      "columns": {
+        "lampiran_id": {
+          "name": "lampiran_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kegiatan_id": {
+          "name": "kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nama": {
+          "name": "nama",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "namaLampiran_index": {
+          "name": "namaLampiran_index",
+          "columns": [
+            "nama"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lampiran_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk": {
+          "name": "lampiran_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk",
+          "tableFrom": "lampiran_kegiatan",
+          "tableTo": "kegiatan",
+          "columnsFrom": [
+            "kegiatan_id"
+          ],
+          "columnsTo": [
+            "kegiatan_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "lampiran_kegiatan_lampiran_id": {
+          "name": "lampiran_kegiatan_lampiran_id",
+          "columns": [
+            "lampiran_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "progress_agenda": {
+      "name": "progress_agenda",
+      "columns": {
+        "progress_id": {
+          "name": "progress_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "agenda_id": {
+          "name": "agenda_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deskripsi_progress": {
+          "name": "deskripsi_progress",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "progress_agenda_agenda_id_agenda_kegiatan_agenda_id_fk": {
+          "name": "progress_agenda_agenda_id_agenda_kegiatan_agenda_id_fk",
+          "tableFrom": "progress_agenda",
+          "tableTo": "agenda_kegiatan",
+          "columnsFrom": [
+            "agenda_id"
+          ],
+          "columnsTo": [
+            "agenda_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "progress_agenda_progress_id": {
+          "name": "progress_agenda_progress_id",
+          "columns": [
+            "progress_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "progress_to_attachment": {
+      "name": "progress_to_attachment",
+      "columns": {
+        "progress_id": {
+          "name": "progress_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attachment_id": {
+          "name": "attachment_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "progress_index": {
+          "name": "progress_index",
+          "columns": [
+            "progress_id"
+          ],
+          "isUnique": false
+        },
+        "unique_progress_attachment": {
+          "name": "unique_progress_attachment",
+          "columns": [
+            "progress_id",
+            "attachment_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "progress": {
+          "name": "progress",
+          "tableFrom": "progress_to_attachment",
+          "tableTo": "progress_agenda",
+          "columnsFrom": [
+            "progress_id"
+          ],
+          "columnsTo": [
+            "progress_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "attachment": {
+          "name": "attachment",
+          "tableFrom": "progress_to_attachment",
+          "tableTo": "progress_attachment",
+          "columnsFrom": [
+            "attachment_id"
+          ],
+          "columnsTo": [
+            "attachment_id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "progress_attachment": {
+      "name": "progress_attachment",
+      "columns": {
+        "attachment_id": {
+          "name": "attachment_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nama": {
+          "name": "nama",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "hash": {
+          "name": "hash",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "hash_index": {
+          "name": "hash_index",
+          "columns": [
+            "hash"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "progress_attachment_attachment_id": {
+          "name": "progress_attachment_attachment_id",
+          "columns": [
+            "attachment_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "progress_attachment_hash_unique": {
+          "name": "progress_attachment_hash_unique",
+          "columns": [
+            "hash"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "password_reset": {
+      "name": "password_reset",
+      "columns": {
+        "reset_id": {
+          "name": "reset_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "password_reset_user_id_users_user_id_fk": {
+          "name": "password_reset_user_id_users_user_id_fk",
+          "tableFrom": "password_reset",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "password_reset_reset_id": {
+          "name": "password_reset_reset_id",
+          "columns": [
+            "reset_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "tipe_kegiatan": {
+      "name": "tipe_kegiatan",
+      "columns": {
+        "tipe_kegiatan_id": {
+          "name": "tipe_kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipe_kegiatan": {
+          "name": "tipe_kegiatan",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "is_jti": {
+          "name": "is_jti",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "tipe_kegiatan_tipe_kegiatan_id": {
+          "name": "tipe_kegiatan_tipe_kegiatan_id",
+          "columns": [
+            "tipe_kegiatan_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "users": {
+      "name": "users",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nip": {
+          "name": "nip",
+          "type": "varchar(18)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "nama": {
+          "name": "nama",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "enum('admin','manajemen','dosen')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'dosen'"
+        },
+        "profile_image": {
+          "name": "profile_image",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "nip_index": {
+          "name": "nip_index",
+          "columns": [
+            "nip"
+          ],
+          "isUnique": false
+        },
+        "nama_index": {
+          "name": "nama_index",
+          "columns": [
+            "nama"
+          ],
+          "isUnique": false
+        },
+        "email_index": {
+          "name": "email_index",
+          "columns": [
+            "email"
+          ],
+          "isUnique": false
+        },
+        "role_index": {
+          "name": "role_index",
+          "columns": [
+            "role"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "users_user_id": {
+          "name": "users_user_id",
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "users_nip_unique": {
+          "name": "users_nip_unique",
+          "columns": [
+            "nip"
+          ]
+        },
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "users_fcm_token": {
+      "name": "users_fcm_token",
+      "columns": {
+        "fcm_id": {
+          "name": "fcm_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fcmtoken": {
+          "name": "fcmtoken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "device_type": {
+          "name": "device_type",
+          "type": "enum('web','mobile')",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_fcm_token_user_id_users_user_id_fk": {
+          "name": "users_fcm_token_user_id_users_user_id_fk",
+          "tableFrom": "users_fcm_token",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "users_fcm_token_fcm_id": {
+          "name": "users_fcm_token_fcm_id",
+          "columns": [
+            "fcm_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "users_to_kegiatan": {
+      "name": "users_to_kegiatan",
+      "columns": {
+        "user_to_kegiatan_id": {
+          "name": "user_to_kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kegiatan_id": {
+          "name": "kegiatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "jabatan_id": {
+          "name": "jabatan_id",
+          "type": "varchar(24)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "users_index": {
+          "name": "users_index",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "kegiatan_index": {
+          "name": "kegiatan_index",
+          "columns": [
+            "kegiatan_id"
+          ],
+          "isUnique": false
+        },
+        "user_kegiatan_unique": {
+          "name": "user_kegiatan_unique",
+          "columns": [
+            "user_id",
+            "kegiatan_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "users_to_kegiatan_user_id_users_user_id_fk": {
+          "name": "users_to_kegiatan_user_id_users_user_id_fk",
+          "tableFrom": "users_to_kegiatan",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "users_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk": {
+          "name": "users_to_kegiatan_kegiatan_id_kegiatan_kegiatan_id_fk",
+          "tableFrom": "users_to_kegiatan",
+          "tableTo": "kegiatan",
+          "columnsFrom": [
+            "kegiatan_id"
+          ],
+          "columnsTo": [
+            "kegiatan_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "users_to_kegiatan_jabatan_id_jabatan_anggota_jabatan_id_fk": {
+          "name": "users_to_kegiatan_jabatan_id_jabatan_anggota_jabatan_id_fk",
+          "tableFrom": "users_to_kegiatan",
+          "tableTo": "jabatan_anggota",
+          "columnsFrom": [
+            "jabatan_id"
+          ],
+          "columnsTo": [
+            "jabatan_id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "users_to_kegiatan_user_to_kegiatan_id": {
+          "name": "users_to_kegiatan_user_to_kegiatan_id",
+          "columns": [
+            "user_to_kegiatan_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

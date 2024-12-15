@@ -1,7 +1,7 @@
 import * as tipeKegiatanModels from '../models/tipeKegiatanModels'
 
-export async function fetchAllTipeKegiatan() {
-    return await tipeKegiatanModels.fetchAllTipeKegiatan();
+export async function fetchAllTipeKegiatan(isJti?: boolean) {
+    return await tipeKegiatanModels.fetchAllTipeKegiatan(isJti);
 }
 
 export async function fetchTipeKegiatan(uidTipeKegiatan: string) {

@@ -15,12 +15,14 @@ export async function fetchTipeKegiatan(req: Request, res: Response) {
         return
     }
 
-    const { uid: uidTipeKegiatan } = req.query
+    const { uid: uidTipeKegiatan, is_jti: isJti } = req.query
     let data: any
 
     try {
         if (uidTipeKegiatan) {
             data = await tipeKegiatanServices.fetchTipeKegiatan(uidTipeKegiatan as string)
+        } else if (isJti) {
+            data = await tipeKegiatanServices.fetchAllTipeKegiatan(isJti == 'true' ? true : false)
         } else {
             data = await tipeKegiatanServices.fetchAllTipeKegiatan()
         }
@@ -66,10 +68,10 @@ export async function createTipeKegiatan(req: Request, res: Response) {
         return
     }
 
-    const { nama_tipe_kegiatan: tipeKegiatan } = req.body
+    const { nama_tipe_kegiatan: tipeKegiatan, is_jti: isJti } = req.body
 
     try {
-        const data = await tipeKegiatanServices.createTipeKegiatan({ tipeKegiatan })
+        const data = await tipeKegiatanServices.createTipeKegiatan({ tipeKegiatan, isJti })
         res.status(200).json(createResponse(
             true,
             data,
@@ -116,11 +118,11 @@ export async function updateTipeKegiatan(req: Request, res: Response) {
         return
     }
 
-    const { nama_tipe_kegiatan: tipeKegiatan } = req.body
+    const { nama_tipe_kegiatan: tipeKegiatan, is_jti: isJti } = req.body
     const { uid } = req.query
 
     try {
-        const data = await tipeKegiatanServices.updateTipeKegiatan(uid as string, { tipeKegiatan })
+        const data = await tipeKegiatanServices.updateTipeKegiatan(uid as string, { tipeKegiatan, isJti })
         if (data === "tipekegiatan_is_not_found") {
             res.status(404).json(createResponse(false, null, "TipeKegiatan not found"))
             return

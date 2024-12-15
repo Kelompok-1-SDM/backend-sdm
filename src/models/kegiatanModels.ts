@@ -11,7 +11,8 @@ export async function fetchAllKegiatan() {
         with: {
             tipeKegiatan: {
                 columns: {
-                    tipeKegiatan: true
+                    tipeKegiatan: true,
+                    isJti: true
                 }
             }
         }
@@ -22,7 +23,8 @@ export async function fetchAllKegiatan() {
     const op = ap.map((it) => {
         return {
             ...it,
-            tipeKegiatan: it.tipeKegiatan?.tipeKegiatan ?? null
+            tipeKegiatan: it.tipeKegiatan?.tipeKegiatan ?? null,
+            isjti: it.tipeKegiatan?.isJti ?? null
         }
     })
 
@@ -116,7 +118,8 @@ export async function fetchKegiatanByUser(uidUser: string, isDone?: boolean, tan
             ...kegiatansColumns,
             jabatan: jabatanAnggota.namaJabatan,
             isPic: jabatanAnggota.isPic,
-            tipeKegiatan: tipeKegiatan.tipeKegiatan
+            tipeKegiatan: tipeKegiatan.tipeKegiatan,
+            isJti: tipeKegiatan.isJti
         })
         .from(usersToKegiatans)
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
@@ -147,7 +150,7 @@ export async function fetchKegiatanByUser(uidUser: string, isDone?: boolean, tan
 }
 
 export async function fetchUserCurrentKegiatan(uidUser: string, datetime: Date) {
-    const prepared = db.select({ ...kegiatansColumns, jabatan: jabatanAnggota.namaJabatan, isPic: jabatanAnggota.isPic, tipeKegiatan: tipeKegiatan.tipeKegiatan }).from(usersToKegiatans)
+    const prepared = db.select({ ...kegiatansColumns, jabatan: jabatanAnggota.namaJabatan, isPic: jabatanAnggota.isPic, tipeKegiatan: tipeKegiatan.tipeKegiatan, isJti: tipeKegiatan.isJti }).from(usersToKegiatans)
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
         .leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId))
         .leftJoin(tipeKegiatan, eq(kegiatans.tipeKegiatanId, tipeKegiatan.tipeKegiatanId))
@@ -215,6 +218,7 @@ export async function fetchKegiatanByUid(uidKegiatan: string) {
         }),
 
         tipeKegiatan: kegiatan.tipeKegiatan?.tipeKegiatan ?? null,
+        isJti: kegiatan.tipeKegiatan?.isJti,
 
         users: kegiatan.users ? kegiatan.users.map((it) => {
             return {
