@@ -24,7 +24,7 @@ export async function fetchAllKegiatan() {
         return {
             ...it,
             tipeKegiatan: it.tipeKegiatan?.tipeKegiatan ?? null,
-            isjti: it.tipeKegiatan?.isJti ?? null
+            isJti: it.tipeKegiatan?.isJti ?? null
         }
     })
 
