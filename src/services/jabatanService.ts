@@ -1,7 +1,7 @@
 import * as jabatanModels from '../models/jabatanModels'
 
-export async function fetchAllJabatan() {
-    return await jabatanModels.fetchAllJabatan();
+export async function fetchAllJabatan(isPic?: boolean) {
+    return await jabatanModels.fetchAllJabatan(isPic);
 }
 
 export async function fetchJabatan(uidJabatan: string) {

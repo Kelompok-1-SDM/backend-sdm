@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { createResponse } from "../utils/utils";
 import * as penugasanServices from '../services/penugasanService'
+import { fetchUserJabatanInKegiatan } from '../models/penugasanModels';
 
 export async function fetchPenugasanByKegiatan(req: Request, res: Response) {
     const errors = validationResult(req);
@@ -71,6 +72,37 @@ export async function tugaskanKegiatan(req: Request, res: Response) {
         const { list_user_ditugaskan: listUserDitugaskan } = req.body
         const { uid_kegiatan: uidKegiatan } = req.query
 
+        if (req.user?.role === 'dosen') {
+            const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
+            if (!wasAllowed) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this"
+                ));
+                return
+            }
+
+            if (wasAllowed.isJti) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this | You ca'nt edit kegiatan jti"
+                ));
+                return
+            }
+
+
+            if (!wasAllowed.isPic) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not PIC, or higher role"
+                ));
+                return
+            }
+        }
+
         const data = await penugasanServices.tugaskanKegiatan(uidKegiatan as string, listUserDitugaskan)
 
         res.status(200).json(createResponse(
@@ -128,6 +160,37 @@ export async function updatePenugasanKegiatan(req: Request, res: Response) {
     try {
         const { list_user_ditugaskan: listUserDitugaskan } = req.body
         const { uid_kegiatan: uidKegiatan } = req.query
+
+        if (req.user?.role === 'dosen') {
+            const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
+            if (!wasAllowed) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this"
+                ));
+                return
+            }
+
+            if (wasAllowed.isJti) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this | You ca'nt edit kegiatan jti"
+                ));
+                return
+            }
+
+
+            if (!wasAllowed.isPic) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not PIC, or higher role"
+                ));
+                return
+            }
+        }
 
         const data = await penugasanServices.updatePenugasanKegiatan(uidKegiatan as string, listUserDitugaskan)
 
@@ -187,6 +250,37 @@ export async function deletePenugasan(req: Request, res: Response) {
 
     try {
         const data = await penugasanServices.deletePenugasan(uidKegiatan as string, uidUser as string)
+
+        if (req.user?.role === 'dosen') {
+            const wasAllowed = await fetchUserJabatanInKegiatan(uidKegiatan as string, req.user!.userId as string)
+            if (!wasAllowed) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this"
+                ));
+                return
+            }
+
+            if (wasAllowed.isJti) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not allowed to do this | You ca'nt edit kegiatan jti"
+                ));
+                return
+            }
+
+
+            if (!wasAllowed.isPic) {
+                res.status(401).json(createResponse(
+                    false,
+                    null,
+                    "You're not PIC, or higher role"
+                ));
+                return
+            }
+        }
 
         if (data === "kegiatan_is_not_found") {
             res.status(404).json(createResponse(false, null, "Kegiatan not found"))

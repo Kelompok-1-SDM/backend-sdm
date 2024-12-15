@@ -1,15 +1,15 @@
 import { and, eq, getTableColumns, sql } from "drizzle-orm";
-import * as usersModels from '../models/usersModels'
-import * as kegiatanModels from '../models/kegiatanModels'
-import { agendaToUsersKegiatans, jabatanAnggota, usersToKegiatans } from "../db/schema";
+import { agendaToUsersKegiatans, jabatanAnggota, kegiatans, tipeKegiatan, usersToKegiatans } from "../db/schema";
 import { addTimestamps, batchQuerySize, db } from "./utilsModel";
 
 export const userToKegiatanColumns = getTableColumns(usersToKegiatans)
 
 // Internal Only
 export async function fetchUserJabatanInKegiatan(uidKegiatan: string, uidUser: string) {
-    const prepared = db.select({ isPic: jabatanAnggota.isPic })
+    const prepared = db.select({ isPic: jabatanAnggota.isPic, isJti: tipeKegiatan.isJti })
         .from(usersToKegiatans)
+        .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
+        .leftJoin(tipeKegiatan, eq(tipeKegiatan.tipeKegiatanId, kegiatans.tipeKegiatanId))
         .leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId))
         .where(
             and(

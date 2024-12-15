@@ -11,7 +11,7 @@ router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid_user').isString().optional().trim().withMessage("This key is required and it's string"),
 ], penugasanController.fetchPenugasanByKegiatan)
 
-router.post('/', authorize(['admin', 'manajemen']), [
+router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid_kegiatan').isString().trim().withMessage("This key is required and it's string"),
     query('uid_kegiatan').notEmpty().withMessage("This key should not be empty"),
     body('list_user_ditugaskan').isArray().withMessage('List tugaskan must be an array'),
@@ -23,7 +23,7 @@ router.post('/', authorize(['admin', 'manajemen']), [
 ], penugasanController.tugaskanKegiatan)
 
 
-router.put('/', authorize(['admin', 'manajemen']), [
+router.put('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid_kegiatan').isString().trim().withMessage("This key is required and it's string"),
     query('uid_kegiatan').notEmpty().withMessage("This key should not be empty"),
     body('list_user_ditugaskan').isArray().withMessage('List tugaskan must be an array'),
@@ -34,7 +34,7 @@ router.put('/', authorize(['admin', 'manajemen']), [
     body('list_user_ditugaskan.*.uid_jabatan').optional().notEmpty().withMessage("This key should not be empty"),
 ], penugasanController.updatePenugasanKegiatan)
 
-router.delete('/', authorize(['admin', 'manajemen']), [
+router.delete('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid_kegiatan').isString().trim().withMessage("This key is required and it's string"),
     query('uid_kegiatan').notEmpty().withMessage("This key should not be empty"),
     query('uid_user').isString().trim().withMessage("This key is required and it's string"),

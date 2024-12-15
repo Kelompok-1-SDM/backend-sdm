@@ -35,20 +35,6 @@ export async function tugaskanKegiatan(uidKegiatan: string, listUserDitugaskan: 
 export async function updatePenugasanKegiatan(uidKegiatan: string, listUserDitugaskan: { uid_user: string, uid_jabatan: string }[]) {
     // TODO Do notification
     const apa = await penugasanModels.updatePenugasanKegiatan(uidKegiatan, listUserDitugaskan)
-
-    const kegKomp = await kegiatanModels.fetchKegiatanOnly(uidKegiatan)
-    await Promise.all(listUserDitugaskan!.map(async (it) => {
-        await usersModels.addJumlahKegiatan(it.uid_user, undefined, kegKomp!.tanggalMulai!.getFullYear(), kegKomp!.tanggalMulai!.getMonth() + 1)
-    }))
-
-    const cht = await ChatRoom.findOne({ roomId: uidKegiatan })
-    await Promise.all(listUserDitugaskan.map(async (asp) => {
-        if (cht && !cht.assignedUsers?.includes(asp.uid_user)) {
-            cht.assignedUsers!.push(asp.uid_user)
-        }
-    }))
-    await cht?.save()
-
     return apa
 }
 

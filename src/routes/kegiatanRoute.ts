@@ -9,7 +9,7 @@ router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
     query('uid').optional().notEmpty().withMessage("This key should not be empty"),
     query('uid_user').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
-    query('is_done').isBoolean().optional().withMessage("is_done is optional and its boolean"),
+    query('is_done').isBoolean().optional().toBoolean().withMessage("is_done is optional and its boolean"),
     query('is_done').optional().notEmpty().withMessage("This key should not be empty"),
     query('tanggal').isISO8601().optional().trim().toDate().withMessage('This key is required and is ISO8601'),
     query('tanggal').optional().notEmpty().withMessage("This key should not be empty"),
@@ -29,10 +29,14 @@ router.post('/', authorize(['admin', 'manajemen', 'dosen']), [
     body('is_done').isBoolean().optional().toBoolean().withMessage('This key is required and is Boolean'),
     body('is_done').optional().notEmpty().withMessage("This key should not be empty"),
     body('deskripsi').isString().trim().withMessage("This key is required and it's string"),
-    body('deskripsi').notEmpty().withMessage("This key should not be empty")
+    body('deskripsi').notEmpty().withMessage("This key should not be empty"),
+    body('progress').isString().optional().trim().withMessage("This key is required and it's string"),
+    body('progress').optional().notEmpty().withMessage("This key should not be empty"),
+    body('uid_jabatan').isString().optional().trim().withMessage("This key is required and it's string"),
+    body('uid_jabatan').optional().notEmpty().withMessage("This key should not be empty"),
 ], kegiatanController.createKegiatan)
 
-router.put('/', authorize(['admin', 'manajemen']), [
+router.put('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().withMessage("This key is optional and it's string"),
     query('uid').notEmpty().withMessage("This key should not be empty"),
     body('judul_kegiatan').isString().optional().trim().withMessage("This key is optional and it's string"),
@@ -49,6 +53,8 @@ router.put('/', authorize(['admin', 'manajemen']), [
     body('is_done').optional().notEmpty().withMessage("This key should not be empty"),
     body('deskripsi').isString().optional().trim().withMessage("This key is optional and it's string"),
     body('deskripsi').optional().notEmpty().withMessage("This key should not be empty"),
+    body('progress').isString().optional().trim().withMessage("This key is optional and it's string"),
+    body('progress').optional().notEmpty().withMessage("This key should not be empty"),
 ], kegiatanController.updateKegiatan)
 
 router.delete('/', authorize(['admin', 'manajemen']), [

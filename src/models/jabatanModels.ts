@@ -5,8 +5,9 @@ import { addTimestamps, db } from "./utilsModel";
 export type JabatanDataType = typeof jabatanAnggota.$inferInsert
 export const jabatansColumns = getTableColumns(jabatanAnggota)
 //TODO Improve at query peformance
-export async function fetchAllJabatan() {
+export async function fetchAllJabatan(isPic?: boolean) {
     return await db.query.jabatanAnggota.findMany({
+        where: isPic != null ? ((jabatanAnggota, { eq }) => eq(jabatanAnggota.isPic, isPic)) : undefined,
         orderBy: (jabatanAnggota, { desc }) => [desc(jabatanAnggota.isPic)]
     })
 }

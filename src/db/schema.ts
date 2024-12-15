@@ -74,6 +74,8 @@ export const kegiatans = mysqlTable('kegiatan', {
     lokasi: varchar({ length: 100 }).notNull(),
     deskripsi: text(),
 
+    progress: text(),
+
     ...timestampsHelper
 }, (table) => {
     return {

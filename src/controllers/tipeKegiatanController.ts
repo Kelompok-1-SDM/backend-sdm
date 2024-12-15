@@ -21,8 +21,8 @@ export async function fetchTipeKegiatan(req: Request, res: Response) {
     try {
         if (uidTipeKegiatan) {
             data = await tipeKegiatanServices.fetchTipeKegiatan(uidTipeKegiatan as string)
-        } else if (isJti) {
-            data = await tipeKegiatanServices.fetchAllTipeKegiatan(isJti == 'true' ? true : false)
+        } else if (isJti != null) {
+            data = await tipeKegiatanServices.fetchAllTipeKegiatan(Boolean(isJti))
         } else {
             data = await tipeKegiatanServices.fetchAllTipeKegiatan()
         }

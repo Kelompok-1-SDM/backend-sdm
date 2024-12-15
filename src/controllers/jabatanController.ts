@@ -15,12 +15,14 @@ export async function fetchJabatan(req: Request, res: Response) {
         return
     }
 
-    const { uid: uidJabatan } = req.query
+    const { uid: uidJabatan, is_pic: isPic } = req.query
     let data: any
 
     try {
         if (uidJabatan) {
             data = await jabatanServices.fetchJabatan(uidJabatan as string)
+        } else if (isPic != null) {
+            data = await jabatanServices.fetchAllJabatan(Boolean(isPic))
         } else {
             data = await jabatanServices.fetchAllJabatan()
         }

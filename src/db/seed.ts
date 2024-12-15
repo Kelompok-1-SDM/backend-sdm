@@ -126,6 +126,7 @@ const seedKegiatans = async () => {
         tanggalAkhir: faker.date.soon(),
         deskripsi: faker.lorem.paragraph(),
         lokasi: faker.location.city(),
+        progress: faker.lorem.paragraph(),
         createdAt: new Date(),
         updatedAt: new Date(),
     }));

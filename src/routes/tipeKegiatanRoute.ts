@@ -8,15 +8,15 @@ const router = express.Router();
 router.get('/', authorize(['admin', 'manajemen', 'dosen']), [
     query('uid').isString().trim().optional().toLowerCase().withMessage("This key is optional and it's string"),
     query('uid').optional().notEmpty().withMessage("This key should not be empty"),
-    query('is_jti').isBoolean().trim().optional().toBoolean().withMessage("This key is optional and it's boolean"),
+    query('is_jti').isBoolean().optional().toBoolean().withMessage("This key is optional and it's boolean"),
     query('is_jti').optional().notEmpty().withMessage("This key should not be empty"),
 ], tipeKegiatanController.fetchTipeKegiatan)
 
 router.post('/', authorize(['admin', 'manajemen']), [
     body('nama_tipe_kegiatan').isString().trim().toLowerCase().withMessage("This key is optional and it's string"),
     body('nama_tipe_kegiatan').notEmpty().withMessage("This key should not be empty"),
-    body('is_jti').isBoolean().trim().toBoolean().withMessage("This key is optional and it's boolean"),
-    body('is_jti').notEmpty().withMessage("This key should not be empty"),
+    body('is_jti').isBoolean().optional().toBoolean().withMessage("This key is optional and it's boolean"),
+    body('is_jti').optional().notEmpty().withMessage("This key should not be empty"),
 ], tipeKegiatanController.createTipeKegiatan)
 
 router.put('/', authorize(['admin', 'manajemen']), [
@@ -24,7 +24,7 @@ router.put('/', authorize(['admin', 'manajemen']), [
     query('uid').optional().notEmpty().withMessage("This key should not be empty"),
     body('nama_tipe_kegiatan').isString().optional().trim().toLowerCase().withMessage("This key is optional and it's string"),
     body('nama_tipe_kegiatan').optional().notEmpty().withMessage("This key should not be empty"),
-    body('is_jti').isBoolean().optional().trim().toBoolean().withMessage("This key is optional and it's boolean"),
+    body('is_jti').isBoolean().optional().toBoolean().withMessage("This key is optional and it's boolean"),
     body('is_jti').optional().notEmpty().withMessage("This key should not be empty"),
 ], tipeKegiatanController.updateTipeKegiatan)
 
