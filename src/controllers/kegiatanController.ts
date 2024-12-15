@@ -28,8 +28,8 @@ export async function fetchKegiatan(req: Request, res: Response) {
 
     try {
         if (uidUser) {
-            if (tanggal) {
-                data = await kegiatanService.fetchKegiatanByUser(uidUser as string, isDone != null ? Boolean(isDone) : undefined, tanggal as string)
+            if (tanggal || isDone != null) {
+                data = await kegiatanService.fetchKegiatanByUser(uidUser as string, Boolean(isDone), tanggal as string)
             }
             else {
                 data = await kegiatanService.fetchKegiatanByUser(uidUser as string)
