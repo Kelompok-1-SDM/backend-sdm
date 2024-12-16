@@ -140,19 +140,19 @@ export async function addJumlahKegiatan(uidUser: string, wasDecrement: boolean =
         })).onDuplicateKeyUpdate({
             set: addTimestamps({
                 userId: sql`${jumlahKegiatan.userId}`,
-                jumlahKegiatan: sql`${jumlahKegiatan.jumlahKegiatan} + ${wasDecrement ? -1 : 1}`
+                jumlahKegiatan: sql`IF(${jumlahKegiatan.jumlahKegiatan} <= 0 AND ${wasDecrement}, 0, ${jumlahKegiatan.jumlahKegiatan} + ${wasDecrement ? -1 : 1})`
             }, true)
-        })
+        });
 
     const prepared = db.query.users.findFirst({
         where: ((user, { eq }) => eq(user.userId, sql.placeholder('uidUser'))),
         with: {
             userToJumlahKegiatan: true
         }
-    }).prepare()
-    const data = await prepared.execute({ uidUser })
+    }).prepare();
+    const data = await prepared.execute({ uidUser });
 
-    return data
+    return data;
 }
 
 export async function updateUser(uidUser: string, data: Partial<UserDataType>) {
