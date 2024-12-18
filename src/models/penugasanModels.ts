@@ -8,9 +8,10 @@ export const userToKegiatanColumns = getTableColumns(usersToKegiatans)
 export async function fetchUserJabatanInKegiatan(uidKegiatan: string, uidUser: string) {
     const prepared = db.select({ isPic: jabatanAnggota.isPic, isJti: tipeKegiatan.isJti })
         .from(usersToKegiatans)
+        .leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId))
         .leftJoin(kegiatans, eq(kegiatans.kegiatanId, usersToKegiatans.kegiatanId))
         .leftJoin(tipeKegiatan, eq(tipeKegiatan.tipeKegiatanId, kegiatans.tipeKegiatanId))
-        .leftJoin(jabatanAnggota, eq(jabatanAnggota.jabatanId, usersToKegiatans.jabatanId))
+
         .where(
             and(
                 eq(usersToKegiatans.kegiatanId, sql.placeholder('uidKegiatan')),
@@ -18,7 +19,7 @@ export async function fetchUserJabatanInKegiatan(uidKegiatan: string, uidUser: s
             )
         ).prepare()
     const [temp] = await prepared.execute({ uidKegiatan, uidUser })
-
+    
     return temp
 }
 
