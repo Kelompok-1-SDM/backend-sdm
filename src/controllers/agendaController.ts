@@ -30,7 +30,7 @@ export async function fetchAgenda(req: Request, res: Response) {
                 const wasAllowed = await fetchUserJabatanInKegiatan(data.kegiatanId, req.user!.userId as string)
                 const wasInAgenda = await fetchUserInAgenda(uidAgenda as string, req.user!.userId as string)
                 wasMePic = wasAllowed.isPic
-                if ((!wasAllowed && !wasInAgenda) || !wasMePic) {
+                if (!wasAllowed && !wasInAgenda) {
                     res.status(401).json(createResponse(
                         false,
                         null,
