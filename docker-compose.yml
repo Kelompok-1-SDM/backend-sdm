@@ -119,9 +119,10 @@ services:
     container_name: minio
     restart: unless-stopped
     ports:
-      # port to the public endpoint
       - 9000:9000
+      # port to the public endpoint
       - 9001:9001
+      #
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: "admin"
