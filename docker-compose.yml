@@ -1,0 +1,136 @@
+name: "sdm-jti-fullstack"
+
+services:
+  sdm-jti:
+    image: lleans/sdm-jti:latest
+    container_name: sdm-jti
+    environment:
+      - APP_NAME=SIM.SDM JTI
+      - APP_ENV=production
+      # Run PHP Artisan locally and paste it here
+      - APP_KEY=PhpArtisanKey
+      - APP_DEBUG=false
+      - APP_URL=https://webdomain
+      - API_BASE_URL=http://restapi-sdm:3000
+      - JWT_TOKEN_LIFETIME=604800
+    ports:
+      - 80
+    networks:
+      iki-network:
+    restart: unless-stopped
+
+  restapi-sdm:
+    build:
+      context: ./Dockerfile
+      dockerfile: .Dockerfile
+    container_name: restapi-sdm
+    environment:
+      - DATABASE_HOST=mysql
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=IkiPassword
+      - DATABASE_NAME=sdm_jti
+
+      - JWT_SECRET="YourSecretKey"
+      - JWT_EXPIRES_IN=7d
+
+      - MINIO_ENDPOINT=minio
+      - MINIO_ENDPOINT_PUBLIC=mino-public-domain
+      - MINIO_PORT=9000
+      # MINO ACCCESS, CHECK DOCS
+      - MINIO_ACCESS_KEY=YourAccessKey
+      - MINIO_SECRET_KEY=YourSecretKey
+
+      - NODE_ENV=production
+
+      - MONGODB_URI=mongodb://root:example@mongo:27017/sdm_jti?authSource=admin
+
+      # Setup your email withAppPassword. NodeMailer docs
+      - EMAIL_USER=yourEmailGmail
+      - EMAIL_PASS=withAppPasswordGmail
+      - FRONTEND_URL=http://web-domain/public/resetPassword
+
+      - CUID_FINGERPINT=CUID_FINGERPINT
+    ports:
+      - 3000
+    networks:
+      iki-network:
+    restart: unless-stopped
+
+  # Mysql Setup
+  phpmyadmin:
+    image: phpmyadmin:apache
+    container_name: phpmyadmin
+    restart: unless-stopped
+    # This phpmyadmin(data-management) port -> 8801
+    ports:
+      - 8081:80
+    environment:
+      PMA_HOST: "mysql"
+      MYSQL_ROOT_PASSWORD: "IkiPassword"
+      PMA_PORT: 3306
+    networks:
+      iki-network:
+
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    restart: unless-stopped
+    command: --mysql_native_password=ON
+    environment:
+      MYSQL_ROOT_PASSWORD: "IkiPassword"
+    expose:
+      - 3306:3306
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      iki-network:
+
+  # Mongo Setup
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    expose:
+      - 27017:27017
+    networks:
+      iki-network:
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: unless-stopped
+    # This mongo-express(data-management) port -> 8802
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
+    networks:
+      iki-network:
+
+  # File CDN Setup
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      # port to the public endpoint
+      - 9000:9000
+      - 9001:9001
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: "admin"
+      MINIO_ROOT_PASSWORD: "IkiPassword"
+    volumes:
+      - ./data:/data
+    networks:
+      iki-network:
+
+networks:
+  iki-network:
+    name: iki-network
