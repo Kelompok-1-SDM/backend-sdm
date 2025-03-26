@@ -1,6 +1,8 @@
 name: Image Builder
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - main
